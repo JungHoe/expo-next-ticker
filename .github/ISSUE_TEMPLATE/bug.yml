@@ -1,0 +1,17 @@
+name: 버그
+description: 동작이 spec과 다를 때
+title: "fix: "
+labels: ["type:bug"]
+body:
+  - type: textarea
+    id: expected
+    attributes:
+      label: spec상 기대 동작
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 실제 동작과 재현 방법
+    validations:
+      required: true

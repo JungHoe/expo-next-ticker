@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Expo(Metro)는 심볼릭 링크 기반 격리 설치보다 hoisted 구조에서 안정적이다
+nodeLinker: hoisted
+
+allowBuilds:
+  sharp: false
+  unrs-resolver: false

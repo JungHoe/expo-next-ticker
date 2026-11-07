@@ -1,0 +1,32 @@
+name: 기능
+description: spec의 수용 기준 하나를 구현하는 이슈
+title: "feat: "
+labels: ["type:feature"]
+body:
+  - type: input
+    id: spec
+    attributes:
+      label: spec
+      description: 근거가 되는 spec 문서와 절 (예. docs/spec/watchlist.md §5)
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 수용 기준
+      description: spec에서 옮겨 온, 확인할 수 있는 문장
+      value: "- [ ] "
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 영역
+      multiple: true
+      options: [web, mobile, packages]
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: 범위 밖
