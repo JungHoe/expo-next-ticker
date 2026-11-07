@@ -3,7 +3,7 @@ import { contrastRatio, parseOklch } from "./color";
 import { type ColorMode, colors, radius, rule, space } from "./tokens";
 
 const modes = Object.keys(colors) as ColorMode[];
-const foregrounds = ["up", "down", "ink", "muted"] as const;
+const foregrounds = ["up", "down", "ink", "ink-2", "muted"] as const;
 const backgrounds = ["paper", "paper-2", "sheet"] as const;
 
 describe("colors", () => {
