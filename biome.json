@@ -32,6 +32,51 @@
       "react": "recommended"
     }
   },
+  "overrides": [
+    {
+      "includes": ["packages/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "react-native": "packages/*는 플랫폼 중립이다(CLAUDE.md). 앱 전용 코드는 apps/mobile에 둔다",
+                  "react-dom": "packages/*는 플랫폼 중립이다(CLAUDE.md). 웹 전용 코드는 apps/web에 둔다",
+                  "next": "packages/*는 플랫폼 중립이다(CLAUDE.md)",
+                  "expo": "packages/*는 플랫폼 중립이다(CLAUDE.md)"
+                },
+                "patterns": [
+                  {
+                    "group": [
+                      "react-native/*",
+                      "react-native-*",
+                      "next/*",
+                      "expo-*",
+                      "@expo/*"
+                    ],
+                    "message": "packages/*는 플랫폼 중립이다(CLAUDE.md)"
+                  }
+                ]
+              }
+            },
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "window": "packages/*는 플랫폼 중립이다(CLAUDE.md)",
+                  "document": "packages/*는 플랫폼 중립이다(CLAUDE.md)",
+                  "navigator": "packages/*는 플랫폼 중립이다(CLAUDE.md)",
+                  "localStorage": "packages/*는 플랫폼 중립이다(CLAUDE.md)"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
   "assist": {
     "actions": {
       "source": {
