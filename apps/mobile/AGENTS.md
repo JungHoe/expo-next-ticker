@@ -10,15 +10,15 @@ Expo ships breaking changes every SDK release. APIs you remember are likely rena
 
 ## Commands
 
-Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
+This repo is a pnpm 12 workspace. Never use `npx`: run CLIs with `pnpm --filter mobile exec <cli>` from the repo root (or `pnpm exec <cli>` inside `apps/mobile`), so their versions stay pinned in the lockfile. When Expo docs say `npx <cli>`, translate it.
 
 ```bash
-npx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
-npx expo start              # start the dev server
-npx expo lint               # lint
-npx tsc --noEmit            # typecheck
-npx expo-doctor             # diagnose dependency and config issues
-npx expo install --fix      # fix incompatible package versions
+pnpm --filter mobile exec expo install <package>  # ALWAYS use instead of pnpm add — resolves SDK-compatible versions
+pnpm --filter mobile start                        # start the dev server
+pnpm lint                                         # lint (Biome, repo-wide)
+pnpm --filter mobile typecheck                    # typecheck
+pnpm dlx expo-doctor apps/mobile                  # diagnose dependency and config issues (one-off tool)
+pnpm --filter mobile exec expo install --fix      # fix incompatible package versions
 ```
 
 Run lint and typecheck before declaring any task done.
@@ -31,11 +31,11 @@ Run lint and typecheck before declaring any task done.
 
 ## Building with EAS
 
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
+Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. EAS CLI (`eas-cli`) is a devDependency of `apps/mobile`: run it as `pnpm --filter mobile exec eas <command>`, and substitute that for bare `eas` or `npx eas-cli` in docs examples.
 Docs: https://docs.expo.dev/eas/index.md
 
 ## Rules
 
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
-- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
+- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build — which this repo does not use: the app must run in Expo Go (see the root `CLAUDE.md`), so do not add such libraries.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md

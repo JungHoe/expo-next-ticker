@@ -30,4 +30,4 @@ pnpm --filter web dev           # http://localhost:3000
 pnpm --filter mobile start      # Expo Go로 QR 스캔
 ```
 
-Node 22 이상, pnpm 11.
+Node 22 이상, pnpm 12.

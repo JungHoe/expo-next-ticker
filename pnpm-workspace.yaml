@@ -8,3 +8,6 @@ nodeLinker: hoisted
 allowBuilds:
   sharp: false
   unrs-resolver: false
+  # eas-cli 하위 의존성. dtrace-provider는 선택적 네이티브 애드온, protobufjs postinstall은 버전 표기 경고만 낸다
+  dtrace-provider: false
+  protobufjs: false
