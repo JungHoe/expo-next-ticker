@@ -33,5 +33,7 @@
 | 웹 개발 서버 / 빌드 | `pnpm --filter web dev` / `pnpm --filter web build` |
 | 앱 개발 서버 (Expo Go) | `pnpm --filter mobile start` |
 | 앱 번들 확인 | `pnpm --filter mobile exec expo export --platform android` |
+| 앱 의존성 추가 | `pnpm --filter mobile exec expo install <패키지>` (SDK에 맞는 버전으로 고정) |
 
-- Node 22 이상
+- Node 22 이상, pnpm 12
+- 도구 CLI(expo, eas 등)는 `npx`가 아니라 `pnpm --filter <앱> exec <cli>`로 실행한다. 필요한 CLI는 해당 앱의 devDependency로 두어 버전을 lockfile에 고정한다 — 문서가 `npx`로 안내해도 pnpm으로 바꿔 쓴다
