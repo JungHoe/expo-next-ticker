@@ -37,6 +37,18 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5735726e-d549-4339-bae6-109c3302db76"
+      }
+    },
+    "owner": "junghoe",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/5735726e-d549-4339-bae6-109c3302db76"
     }
   }
 }
