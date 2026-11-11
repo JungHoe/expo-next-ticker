@@ -23,9 +23,6 @@ const TOTAL_AMPLITUDE = 0.2;
 const TICK_NOISE = 0.0005;
 
 const SQRT_SUM = PERIODS_SECONDS.reduce((sum, p) => sum + Math.sqrt(p), 0);
-const BASE_AMPLITUDES = PERIODS_SECONDS.map(
-  (p) => (TOTAL_AMPLITUDE * Math.sqrt(p)) / SQRT_SUM,
-);
 
 /** FNV-1a 32비트 */
 function hashString(value: string): number {
@@ -60,7 +57,8 @@ function modelOf(symbol: string): Model {
   if (!ticker) throw new Error(`목록에 없는 종목입니다: ${symbol}`);
   const seed = hashString(symbol);
   const waves = PERIODS_SECONDS.map((period, k) => ({
-    amplitude: BASE_AMPLITUDES[k]! * ticker.volatility,
+    amplitude:
+      ((TOTAL_AMPLITUDE * Math.sqrt(period)) / SQRT_SUM) * ticker.volatility,
     omega: (2 * Math.PI) / period,
     phase: hash01(seed, k) * 2 * Math.PI,
   }));

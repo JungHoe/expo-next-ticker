@@ -173,18 +173,18 @@ describe("historyAt", () => {
   ] as const)("%s: %d점, 간격이 일정하다", (range, count, step) => {
     const points = historyAt("AAPL", range, NOW + 12_345);
     expect(points).toHaveLength(count);
-    for (let i = 1; i < points.length; i++) {
-      expect(points[i]!.t - points[i - 1]!.t).toBe(step);
-    }
+    const times = points.map((point) => point.t);
+    const gaps = times.slice(1).map((t, i) => t - (times[i] ?? Number.NaN));
+    expect(new Set(gaps)).toEqual(new Set([step]));
   });
 
   test("마지막 점은 지금 이전의 간격 경계이고, 값은 priceAt과 같다", () => {
     const now = NOW + 12_345;
     const points = historyAt("AAPL", "1h", now);
-    const last = points.at(-1)!;
-    expect(last.t).toBeLessThanOrEqual(now);
-    expect(last.t % (30 * SECOND)).toBe(0);
-    expect(now - last.t).toBeLessThan(30 * SECOND);
+    const lastT = points.at(-1)?.t ?? Number.NaN;
+    expect(lastT).toBeLessThanOrEqual(now);
+    expect(lastT % (30 * SECOND)).toBe(0);
+    expect(now - lastT).toBeLessThan(30 * SECOND);
     for (const point of points) {
       expect(point.p).toBe(priceAt("AAPL", point.t));
     }
