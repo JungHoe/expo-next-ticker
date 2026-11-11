@@ -48,6 +48,7 @@
 
 ### 스키마와 훅
 - Zod 스키마를 `packages/market`에 두고, 서버는 응답을 만들 때, 클라이언트는 받을 때 같은 스키마로 검증한다
+- 진입점: 서버에서도 쓰는 코드(스키마·생성기·API 함수·클라이언트)는 `@ticker/market`, 훅과 조회 설정은 `@ticker/market/react`. 서버 코드(Route Handler)에 React 훅이 딸려 가지 않게 나눈다(#12)
 - TanStack Query 훅: `useQuotes()`(전체 목록, 화면에서 하나만 쓴다), `useQuote(ticker)`(`useQuotes()`의 결과에서 고른다. 요청을 따로 보내지 않는다), `useHistory(ticker, range)`. API 주소는 설정으로 주입한다(웹은 같은 출처, 앱은 `EXPO_PUBLIC_API_BASE_URL`, 기본값은 배포 주소)
 
 ### 차트 좌표 계산

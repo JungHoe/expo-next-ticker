@@ -4,17 +4,25 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./react": "./src/react.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "devDependencies": {
+    "@types/react": "~19.3.0",
+    "happy-dom": "^21.0.4",
+    "react": "19.3.0",
     "typescript": "~6.0.3",
     "vitest": "5.1.0"
   },
   "dependencies": {
+    "@tanstack/react-query": "5.107.1",
     "zod": "4.6.7"
+  },
+  "peerDependencies": {
+    "react": "^19"
   }
 }
