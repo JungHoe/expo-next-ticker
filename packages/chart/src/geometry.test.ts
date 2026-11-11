@@ -216,6 +216,37 @@ describe("x축 라벨", () => {
   });
 });
 
+describe("이상한 입력에서도 죽지 않는다", () => {
+  test("폭이 부동소수점 한계만큼 작으면 값이 같은 것처럼 그린다", () => {
+    const g = chartGeometry({
+      points: series([230, 230 + 1e-13], MINUTE),
+      width: WIDTH,
+      height: HEIGHT,
+    });
+    for (const [, y] of coords(g.path)) expect(y).toBe(HEIGHT / 2);
+    expect(new Set(g.yTicks.map((t) => t.value)).size).toBe(g.yTicks.length);
+  });
+
+  test("NaN·Infinity 점은 빼고 그린다", () => {
+    const points = series(
+      [229, Number.NaN, 231, Number.POSITIVE_INFINITY, 230],
+      MINUTE,
+    );
+    const g = chartGeometry({ points, width: WIDTH, height: HEIGHT });
+    expect(coords(g.path)).toHaveLength(3);
+    expect(g.domain).toEqual({ min: 229, max: 231 });
+  });
+
+  test("유한한 점이 하나도 없으면 빈 결과", () => {
+    const g = chartGeometry({
+      points: series([Number.NaN, Number.NaN], MINUTE),
+      width: WIDTH,
+      height: HEIGHT,
+    });
+    expect(g.path).toBe("");
+  });
+});
+
 test("점이 없으면 빈 결과", () => {
   const g = chartGeometry({
     points: [],

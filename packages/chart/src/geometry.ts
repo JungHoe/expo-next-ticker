@@ -110,24 +110,31 @@ function timeLabelTimes(start: number, end: number, step: number): number[] {
 }
 
 export function chartGeometry({
-  points,
+  points: input,
   width,
   height,
   reference,
   maxXLabels = 4,
 }: ChartInput): ChartGeometry {
+  // 오염된 응답 하나 때문에 차트 전체가 죽지 않게 유한한 점만 쓴다
+  const points = input.filter(
+    (point) => Number.isFinite(point.t) && Number.isFinite(point.p),
+  );
   const first = points[0];
   const lastPoint = points.at(-1);
   if (!first || !lastPoint) return EMPTY;
 
   const prices = points.map((point) => point.p);
-  let min = Math.min(...prices);
-  let max = Math.max(...prices);
-  const flat = min === max;
-  if (flat) {
-    const pad = Math.max(Math.abs(min) * 0.001, 0.01);
-    min -= pad;
-    max += pad;
+  const dataMin = Math.min(...prices);
+  const dataMax = Math.max(...prices);
+  let min = dataMin;
+  let max = dataMax;
+  // 값이 같거나 부동소수점 한계만큼만 다르면 가운데에 수평선으로 그린다
+  if (max - min <= Math.max(Math.abs(min), Math.abs(max)) * 1e-9) {
+    const center = (min + max) / 2;
+    const pad = Math.max(Math.abs(center) * 0.001, 0.01);
+    min = center - pad;
+    max = center + pad;
   }
 
   const start = first.t;
@@ -161,8 +168,6 @@ export function chartGeometry({
     }
   }
 
-  const dataMin = Math.min(...prices);
-  const dataMax = Math.max(...prices);
   const referenceY =
     reference !== undefined && reference >= dataMin && reference <= dataMax
       ? yOf(reference)
