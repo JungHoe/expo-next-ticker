@@ -79,6 +79,34 @@ describe("priceAt", () => {
 
   test.each(
     TICKERS.map((t) => [t.symbol, t.base] as const),
+  )("%s는 시연 화면이 살아 있을 만큼 움직인다", (symbol, base) => {
+    const day = Array.from({ length: 24 * 60 }, (_, i) =>
+      priceAt(symbol, NOW - i * MINUTE),
+    );
+    expect(Math.max(...day) - Math.min(...day)).toBeGreaterThan(base * 0.01);
+    const month = Array.from({ length: 30 * 24 }, (_, i) =>
+      priceAt(symbol, NOW - i * HOUR),
+    );
+    expect(Math.max(...month)).toBeGreaterThan(base * 1.05);
+    expect(Math.min(...month)).toBeLessThan(base * 0.95);
+  });
+
+  test("결정성 고정값: 구현이 바뀌어 값이 달라지면 알린다", () => {
+    expect([
+      priceAt("AAPL", NOW),
+      priceAt("TSLA", NOW),
+      priceAt("V", NOW),
+    ]).toMatchInlineSnapshot(`
+        [
+          235.27,
+          260.18,
+          275.39,
+        ]
+      `);
+  });
+
+  test.each(
+    TICKERS.map((t) => [t.symbol, t.base] as const),
   )("%s는 30일 동안 기준가 %d의 ±25% 안에 있다(1분 표본)", (symbol, base) => {
     for (let t = NOW - 30 * DAY; t <= NOW; t += MINUTE) {
       const p = priceAt(symbol, t);
@@ -110,6 +138,23 @@ describe("quoteAt", () => {
     expect(q.low).toBe(Math.min(...samples));
     expect(q.high).toBeGreaterThanOrEqual(q.price);
     expect(q.low).toBeLessThanOrEqual(q.price);
+  });
+
+  test("등락·등락률이 -0이 되지 않는다(화면에 -0.00%가 나오지 않게)", () => {
+    for (let t = NOW; t < NOW + DAY; t += 30 * SECOND) {
+      const { change, changePct } = quoteAt("V", t);
+      expect(Object.is(change, -0)).toBe(false);
+      expect(Object.is(changePct, -0)).toBe(false);
+    }
+  });
+
+  test("0시 정각이면 고가·저가·현재가·기준가가 모두 같다", () => {
+    const midnight = kstMidnight(NOW);
+    const atMidnight = quoteAt("AAPL", midnight);
+    expect(atMidnight.high).toBe(atMidnight.price);
+    expect(atMidnight.low).toBe(atMidnight.price);
+    expect(atMidnight.base).toBe(atMidnight.price);
+    expect(atMidnight.change).toBe(0);
   });
 
   test("asOf는 초 단위로 내린 시각이고 종목 이름을 함께 준다", () => {

@@ -69,7 +69,8 @@ function modelOf(symbol: string): Model {
   return model;
 }
 
-const round2 = (v: number) => Math.round(v * 100) / 100;
+/** 소수 둘째 자리 반올림. `+ 0`은 -0을 0으로 바꾼다(화면에 "-0.00%"가 나오지 않게) */
+const round2 = (v: number) => Math.round(v * 100) / 100 + 0;
 
 /** 종목의 time(ms) 시점 가격. 초 단위로 내려 계산한다 */
 export function priceAt(symbol: string, time: number): number {
