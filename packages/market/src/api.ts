@@ -6,7 +6,9 @@ import {
   type ErrorResponse,
   HistoryRangeSchema,
   type HistoryResponse,
+  HistoryResponseSchema,
   type QuotesResponse,
+  QuotesResponseSchema,
 } from "./schema";
 import { historyAt, quoteAt } from "./simulation";
 import { findTicker, TICKERS } from "./tickers";
@@ -23,19 +25,30 @@ function failure(
   return { status, body: { error: { code, message } } };
 }
 
-/** GET /api/quotes?tickers=AAPL,MSFT. tickers가 없으면 고정 목록 전체 */
+const MAX_LISTED_IN_ERROR = 5;
+
+function listForMessage(symbols: string[]): string {
+  const shown = symbols.slice(0, MAX_LISTED_IN_ERROR).join(", ");
+  const rest = symbols.length - MAX_LISTED_IN_ERROR;
+  return rest > 0 ? `${shown} 외 ${rest}개` : shown;
+}
+
+/**
+ * GET /api/quotes?tickers=AAPL,MSFT. `tickersParams`는 `searchParams.getAll("tickers")`.
+ * 비어 있으면 고정 목록 전체. 티커는 대문자만 받는다
+ */
 export function quotesResponse(
-  tickersParam: string | null,
+  tickersParams: readonly string[],
   now: number,
 ): ApiResult<QuotesResponse> {
   let symbols: string[];
-  if (tickersParam === null) {
+  if (tickersParams.length === 0) {
     symbols = TICKERS.map((ticker) => ticker.symbol);
   } else {
     symbols = [
       ...new Set(
-        tickersParam
-          .split(",")
+        tickersParams
+          .flatMap((param) => param.split(","))
           .map((s) => s.trim())
           .filter(Boolean),
       ),
@@ -48,13 +61,16 @@ export function quotesResponse(
       return failure(
         404,
         "UNKNOWN_TICKER",
-        `목록에 없는 종목입니다: ${unknown.join(", ")}`,
+        `목록에 없는 종목입니다: ${listForMessage(unknown)}`,
       );
     }
   }
+  // 서버도 내보내기 전에 검증한다. NaN이 JSON에서 null로 바뀌어 나가는 일을 막는다
   return {
     status: 200,
-    body: { quotes: symbols.map((symbol) => quoteAt(symbol, now)) },
+    body: QuotesResponseSchema.parse({
+      quotes: symbols.map((symbol) => quoteAt(symbol, now)),
+    }),
   };
 }
 
@@ -77,10 +93,10 @@ export function historyResponse(
   }
   return {
     status: 200,
-    body: {
+    body: HistoryResponseSchema.parse({
       ticker,
       range: range.data,
       points: historyAt(ticker, range.data, now),
-    },
+    }),
   };
 }

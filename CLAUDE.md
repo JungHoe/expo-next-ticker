@@ -10,8 +10,9 @@
 3. **브랜치**: `<type>/<이슈번호>-<slug>` (예: `feat/12-watchlist`)
 4. **커밋**: `<type>(<scope>): <내용> (#이슈)` — type은 feat·fix·perf·refactor·docs·chore·test, scope는 web·mobile·tokens·market·ci
 5. **PR**: 템플릿을 채우고 본문에 `Closes #n`. push 전에 `pnpm check` 통과. squash merge — `gh`로 머지할 때는 `--author-email 51188350+JungHoe@users.noreply.github.com`을 붙인다(없으면 계정의 실제 이메일이 공개 이력에 들어간다)
-6. **AI가 틀린 지점**: 타입·lint·테스트·리뷰·화면 확인이 AI 코드의 잘못을 잡았으면 PR에 `ai-miss` 라벨을 달고 `docs/ai-log.md`에 한 줄 남긴다(무엇을 틀렸나 / 무엇이 잡았나 / 다시 안 생기게 무엇을 바꿨나). 이 기록이 프로젝트의 핵심 산출물이다
-7. **성능**: `type:perf` 이슈 본문에 측정 방법과 개선 전 수치, PR에 개선 후 수치를 적는다. 개선 전 수치를 만들려고 일부러 느린 코드를 쓰지 않는다
+6. **AI 리뷰 지적 확인**: 리뷰(사람·AI)가 Next.js·Expo API에 관해 지적하면 앱의 `AGENTS.md`가 가리키는 번들 문서와 대조하고, 빌드·실행으로 확인한 뒤 반영한다 — AI 리뷰어도 학습 데이터 기준으로 틀린다(#11)
+7. **AI가 틀린 지점**: 타입·lint·테스트·리뷰·화면 확인이 AI 코드의 잘못을 잡았으면 PR에 `ai-miss` 라벨을 달고 `docs/ai-log.md`에 한 줄 남긴다(무엇을 틀렸나 / 무엇이 잡았나 / 다시 안 생기게 무엇을 바꿨나). 이 기록이 프로젝트의 핵심 산출물이다
+8. **성능**: `type:perf` 이슈 본문에 측정 방법과 개선 전 수치, PR에 개선 후 수치를 적는다. 개선 전 수치를 만들려고 일부러 느린 코드를 쓰지 않는다
 
 ## 구조와 경계
 - `apps/web` Next.js App Router / `apps/mobile` Expo Router / `packages/*` 공유 코드

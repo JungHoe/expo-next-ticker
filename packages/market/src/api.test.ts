@@ -11,8 +11,8 @@ import { quoteAt } from "./simulation";
 const NOW = Date.UTC(2026, 10, 7, 15, 30, 0);
 
 describe("quotesResponse (GET /api/quotes)", () => {
-  test("tickers가 없으면 고정 10종목을 순서대로 준다", () => {
-    const res = quotesResponse(null, NOW);
+  test("tickers가 없으면([]) 고정 10종목을 순서대로 준다", () => {
+    const res = quotesResponse([], NOW);
     expect(res.status).toBe(200);
     const body = QuotesResponseSchema.parse(res.body);
     expect(body.quotes.map((q) => q.ticker)).toEqual([
@@ -31,21 +31,40 @@ describe("quotesResponse (GET /api/quotes)", () => {
   });
 
   test("tickers를 주면 요청한 순서로, 중복 없이 준다", () => {
-    const res = quotesResponse("TSLA,AAPL,TSLA", NOW);
+    const res = quotesResponse(["TSLA,AAPL,TSLA"], NOW);
     const body = QuotesResponseSchema.parse(res.body);
     expect(body.quotes.map((q) => q.ticker)).toEqual(["TSLA", "AAPL"]);
   });
 
   test("목록에 없는 티커가 있으면 404와 정해진 오류 형태", () => {
-    const res = quotesResponse("AAPL,ZZZZ", NOW);
+    const res = quotesResponse(["AAPL,ZZZZ"], NOW);
     expect(res.status).toBe(404);
     const body = ErrorResponseSchema.parse(res.body);
     expect(body.error.code).toBe("UNKNOWN_TICKER");
     expect(body.error.message).toContain("ZZZZ");
   });
 
+  test("tickers를 여러 번 주면(?tickers=AAPL&tickers=MSFT) 모두 쓴다", () => {
+    const res = quotesResponse(["AAPL", "MSFT"], NOW);
+    const body = QuotesResponseSchema.parse(res.body);
+    expect(body.quotes.map((q) => q.ticker)).toEqual(["AAPL", "MSFT"]);
+  });
+
+  test("티커는 대문자만 받는다", () => {
+    expect(quotesResponse(["aapl"], NOW).status).toBe(404);
+  });
+
+  test("없는 티커가 많아도 오류 메시지에는 앞의 5개만 담는다", () => {
+    const many = Array.from({ length: 50 }, (_, i) => `X${i}`).join(",");
+    const res = quotesResponse([many], NOW);
+    const { message } = ErrorResponseSchema.parse(res.body).error;
+    expect(message).toContain("X0, X1, X2, X3, X4");
+    expect(message).not.toContain("X5,");
+    expect(message).toContain("외 45개");
+  });
+
   test("tickers가 비어 있으면 400", () => {
-    const res = quotesResponse("", NOW);
+    const res = quotesResponse([""], NOW);
     expect(res.status).toBe(400);
     expect(ErrorResponseSchema.parse(res.body).error.code).toBe(
       "INVALID_TICKERS",

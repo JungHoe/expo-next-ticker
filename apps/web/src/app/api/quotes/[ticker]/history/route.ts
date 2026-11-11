@@ -1,6 +1,6 @@
 import { historyResponse } from "@ticker/market";
 import { connection, type NextRequest } from "next/server";
-import { QUOTE_CACHE_CONTROL } from "../../cache";
+import { cacheControlFor } from "../../cache";
 
 /** GET /api/quotes/{ticker}/history?range=1h|1d|1w|1m — docs/spec/market-data.md §3 */
 export async function GET(
@@ -16,6 +16,6 @@ export async function GET(
   );
   return Response.json(body, {
     status,
-    headers: status === 200 ? { "Cache-Control": QUOTE_CACHE_CONTROL } : {},
+    headers: { "Cache-Control": cacheControlFor(status) },
   });
 }
