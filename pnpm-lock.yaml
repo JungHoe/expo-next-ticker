@@ -260,6 +260,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@ticker/market':
+        specifier: workspace:*
+        version: link:../../packages/market
       next:
         specifier: 16.4.5
         version: 16.4.5(@babel/core@7.29.13(supports-color@8.1.1))(@types/node@20.19.43)(babel-plugin-react-compiler@1.0.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -293,6 +296,10 @@ importers:
         version: 5.1.0(vite@8.3.6(terser@5.51.2)(yaml@2.6.0))
 
   packages/market:
+    dependencies:
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       typescript:
         specifier: ~6.0.3

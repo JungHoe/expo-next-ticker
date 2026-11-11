@@ -7,6 +7,7 @@
  * - aₖ ∝ √Pₖ: 긴 주기일수록 크게 흔들려 랜덤워크처럼 보인다
  * - Σaₖ + 잡음 ≤ 0.2005 → 가격은 항상 base × [0.818, 1.223] 안에 있다(±25% 보장)
  */
+import type { HistoryPoint, HistoryRange, Quote } from "./schema";
 import { findTicker, type Ticker } from "./tickers";
 
 const SECOND = 1_000;
@@ -86,20 +87,6 @@ export function kstMidnight(time: number): number {
   return Math.floor((time + KST_OFFSET) / DAY) * DAY - KST_OFFSET;
 }
 
-export type Quote = {
-  ticker: string;
-  name: string;
-  price: number;
-  /** 오늘 0시(KST) 가격 */
-  base: number;
-  change: number;
-  changePct: number;
-  high: number;
-  low: number;
-  /** 초 단위로 내린 시각(epoch ms) */
-  asOf: number;
-};
-
 export function quoteAt(symbol: string, now: number): Quote {
   const { ticker } = modelOf(symbol);
   const midnight = kstMidnight(now);
@@ -126,17 +113,12 @@ export function quoteAt(symbol: string, now: number): Quote {
   };
 }
 
-export const HISTORY_RANGES = ["1h", "1d", "1w", "1m"] as const;
-export type HistoryRange = (typeof HISTORY_RANGES)[number];
-
 const HISTORY_SHAPE: Record<HistoryRange, { step: number; count: number }> = {
   "1h": { step: 30 * SECOND, count: 121 },
   "1d": { step: 10 * MINUTE, count: 145 },
   "1w": { step: HOUR, count: 169 },
   "1m": { step: 6 * HOUR, count: 121 },
 };
-
-export type HistoryPoint = { t: number; p: number };
 
 /** 기간별 차트 점. 마지막 점은 now 이전의 간격 경계라 같은 간격 안에서는 결과가 같다 */
 export function historyAt(
