@@ -1,11 +1,6 @@
 import { describe, expect, test } from "vitest";
-import {
-  HISTORY_RANGES,
-  historyAt,
-  kstMidnight,
-  priceAt,
-  quoteAt,
-} from "./simulation";
+import { HISTORY_RANGES } from "./schema";
+import { historyAt, kstMidnight, priceAt, quoteAt } from "./simulation";
 import { findTicker, TICKERS } from "./tickers";
 
 const SECOND = 1_000;
