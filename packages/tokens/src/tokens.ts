@@ -42,6 +42,13 @@ export const font = {
   display: { family: "Hanken Grotesk", weight: 600, tracking: -0.02 },
   body: { family: "Newsreader", weights: [400, 500] },
   number: { family: "IBM Plex Mono", weights: [400, 500] },
+  /** 위 글꼴에 한글이 없다. 웹은 OS 기본(명조일 수 있음) 대신 이 고딕 목록으로 빠진다. 앱은 기기 고딕이 자동으로 쓰인다 */
+  hangulFallback: [
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
+    "Noto Sans KR",
+    "sans-serif",
+  ],
 } as const;
 
 /** px. 숫자 칸은 font.number + tabular-nums */

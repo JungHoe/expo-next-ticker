@@ -16,7 +16,9 @@
 }
 
 .mark {
-  font: 600 var(--text-title) / 1 var(--font-display);
+  font:
+    600 var(--text-title) / 1 var(--font-display),
+    var(--font-hangul);
   letter-spacing: -0.02em;
   color: var(--color-ink);
   text-decoration: none;

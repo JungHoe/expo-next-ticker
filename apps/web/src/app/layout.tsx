@@ -37,6 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="ko"
       className={`${display.variable} ${body.variable} ${num.variable}`}
     >
+      {/* head에는 토큰 style만 둔다. title·meta는 metadata로(Next.js 문서: head 태그를 직접 쓰지 않는다) */}
       <head>
         <style>{cssVariables()}</style>
       </head>

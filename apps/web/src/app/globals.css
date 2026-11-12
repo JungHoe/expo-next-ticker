@@ -4,7 +4,8 @@
 /* Hallmark · pre-emit critique: P4 H4 E4 S3 R5 V3 · weakest: S, 시세 화면은 서로 닮기 쉽다 → 색은 상승·하락에만 쓰고, 숫자를 소수점에 맞춘 표와 선 두 굵기로 구분한다 */
 
 /* 색·간격·글자 크기 토큰은 @ticker/tokens의 cssVariables()가 layout에서 :root에 넣는다.
-   글꼴 변수(--font-display, --font-body, --font-num)는 next/font가 <html>에 넣는다. */
+   글꼴 변수(--font-display, --font-body, --font-num)는 next/font가 <html>에 넣는다.
+   한글은 세 글꼴에 없으므로 모든 스택 끝에 --font-hangul(고딕 목록)을 붙인다. */
 
 *,
 *::before,
@@ -21,7 +22,7 @@ body {
   margin: 0;
   background: var(--color-paper);
   color: var(--color-ink-2);
-  font-family: var(--font-body);
+  font-family: var(--font-body), var(--font-hangul);
   font-size: var(--text-body);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -34,7 +35,7 @@ h1,
 h2,
 h3 {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-display), var(--font-hangul);
   font-weight: 600;
   color: var(--color-ink);
   letter-spacing: -0.02em;
@@ -66,7 +67,7 @@ a:active {
 
 code,
 .num {
-  font-family: var(--font-num);
+  font-family: var(--font-num), var(--font-hangul);
   font-variant-numeric: tabular-nums;
 }
 

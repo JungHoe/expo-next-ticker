@@ -8,6 +8,7 @@ import {
   type ColorMode,
   type ColorToken,
   colors,
+  font,
   radius,
   rule,
   space,
@@ -35,7 +36,11 @@ const colorEntries = (mode: ColorMode): [string, string][] =>
   Object.entries(colors[mode]).map(([name, value]) => [`color-${name}`, value]);
 
 export function cssVariables(): string {
+  const hangul = font.hangulFallback
+    .map((family) => (family.includes(" ") ? `"${family}"` : family))
+    .join(", ");
   const light = declarations([
+    ["font-hangul", hangul],
     ...colorEntries("light"),
     ...px("space", space),
     ...px("text", text),

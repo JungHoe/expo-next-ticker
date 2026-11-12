@@ -44,6 +44,12 @@ describe("cssVariables (웹)", () => {
     expect(css).not.toMatch(/--[a-z-]*[A-Z]/);
   });
 
+  test("한글 대체 글꼴은 고딕으로 정해 둔다(OS 기본 명조로 빠지지 않게)", () => {
+    expect(css).toMatch(
+      /--font-hangul: [^;]*"Apple SD Gothic Neo"[^;]*"Malgun Gothic"[^;]*sans-serif;/,
+    );
+  });
+
   test("브라우저 기본 UI도 라이트·다크를 따른다", () => {
     expect(split(css).light).toContain("color-scheme: light dark;");
   });
