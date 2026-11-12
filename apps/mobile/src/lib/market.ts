@@ -7,11 +7,17 @@ import {
 import type { MarketApiConfig } from "@ticker/market/react";
 import { AppState, Platform } from "react-native";
 
-/** 앱은 배포된 웹의 시세 API를 부른다. 로컬 웹 서버를 쓰려면 EXPO_PUBLIC_API_BASE_URL을 준다 */
+const PRODUCTION_API = "https://expo-next-ticker.vercel.app";
+
+/**
+ * 앱은 배포된 웹의 시세 API를 부른다. 로컬 웹 서버를 쓰려면 EXPO_PUBLIC_API_BASE_URL을 준다.
+ * 빈 값이면 배포 주소를 쓰고, 끝의 "/"는 뗀다("…/" + "/api"가 "//api"가 되지 않게)
+ */
 export const marketApi: MarketApiConfig = {
-  baseUrl:
-    process.env.EXPO_PUBLIC_API_BASE_URL ??
-    "https://expo-next-ticker.vercel.app",
+  baseUrl: (process.env.EXPO_PUBLIC_API_BASE_URL || PRODUCTION_API).replace(
+    /\/+$/,
+    "",
+  ),
   fetch: (url, init) =>
     fetch(url, { signal: init?.signal as AbortSignal | undefined }),
 };
@@ -36,6 +42,7 @@ export function connectQueryToDevice() {
     return () => subscription.remove();
   });
   onlineManager.setEventListener((setOnline) =>
-    NetInfo.addEventListener((state) => setOnline(Boolean(state.isConnected))),
+    // isConnected는 처음에 null(아직 모름)이다. 모르는 동안은 온라인으로 보고 첫 요청을 막지 않는다
+    NetInfo.addEventListener((state) => setOnline(state.isConnected !== false)),
   );
 }

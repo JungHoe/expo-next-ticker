@@ -7,6 +7,7 @@ import {
   QueryObserver,
 } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { z } from "zod";
 import { historyResponse, quotesResponse } from "./api";
 import {
   fetchHistory,
@@ -22,6 +23,17 @@ import {
 import { quoteAt } from "./simulation";
 
 const NOW = Date.UTC(2026, 10, 7, 15, 30, 0);
+
+/**
+ * 패키지는 DOM·Node 타입 없이 검사하므로 setTimeout을 타입과 함께 꺼낸다.
+ * 부를 때마다 읽어야 vi.useFakeTimers()가 바꿔 넣은 가짜 타이머를 쓴다
+ */
+const later = (callback: () => void, ms: number) =>
+  (
+    globalThis as unknown as {
+      setTimeout: (callback: () => void, ms: number) => unknown;
+    }
+  ).setTimeout(callback, ms);
 
 /** 우리 API 함수로 응답하는 가짜 fetch. 호출한 URL을 기록한다 */
 function fakeApi(now = () => NOW) {
@@ -90,6 +102,42 @@ describe("조회 설정", () => {
     expect(options.queryKey).toEqual(["market", "quotes"]);
     expect(options.refetchInterval).toBe(1_000);
     expect(options.refetchIntervalInBackground).toBe(false);
+    // 1초 안에 다시 연 화면은 새로 받지 않고, 실패는 다음 폴링이 곧 재시도다
+    expect(options.staleTime).toBe(1_000);
+    expect(options.retry).toBe(false);
+  });
+
+  test("이력은 확정 오류(4xx·형태 오류)를 재시도하지 않고, 일시 오류는 1초 간격으로 2번까지", () => {
+    const { retry, retryDelay } = historyQueryOptions(
+      fakeApi().config,
+      "AAPL",
+      "1h",
+    );
+    if (typeof retry !== "function") throw new Error("retry는 함수여야 한다");
+    expect(retry(0, new MarketApiError(404, "UNKNOWN_TICKER", ""))).toBe(false);
+    expect(retry(0, new MarketApiError(400, "INVALID_RANGE", ""))).toBe(false);
+    expect(retry(0, new z.ZodError([]))).toBe(false);
+    expect(retry(0, new MarketApiError(502, "HTTP_ERROR", ""))).toBe(true);
+    expect(retry(0, new TypeError("Network request failed"))).toBe(true);
+    expect(retry(2, new TypeError("Network request failed"))).toBe(false);
+    expect(retryDelay).toBe(1_000);
+  });
+
+  test("기간을 바꾸는 동안 같은 종목의 이전 차트만 유지한다(다른 종목 차트는 남기지 않는다)", () => {
+    const { placeholderData } = historyQueryOptions(
+      fakeApi().config,
+      "AAPL",
+      "1d",
+    );
+    if (typeof placeholderData !== "function") throw new Error("함수여야 한다");
+    const prev = (ticker: string) => ({
+      ticker,
+      range: "1h" as const,
+      points: [],
+    });
+    expect(placeholderData(prev("AAPL"), undefined)).toEqual(prev("AAPL"));
+    expect(placeholderData(prev("MSFT"), undefined)).toBeUndefined();
+    expect(placeholderData(undefined, undefined)).toBeUndefined();
   });
 
   test("이력은 기간 간격마다 다시 받고, 기간을 바꾸는 동안 이전 차트를 유지한다", () => {
@@ -97,7 +145,6 @@ describe("조회 설정", () => {
     const hour = historyQueryOptions(config, "AAPL", "1h");
     expect(hour.queryKey).toEqual(["market", "history", "AAPL", "1h"]);
     expect(hour.refetchInterval).toBe(30_000);
-    expect(hour.placeholderData).toBe(keepPreviousData);
     expect(historyQueryOptions(config, "AAPL", "1m").refetchInterval).toBe(
       6 * 60 * 60_000,
     );
@@ -108,21 +155,38 @@ describe("요청 공유", () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  test("목록과 상세가 함께 보여도 시세 요청은 초당 1회다", async () => {
+  test("목록과 상세가 함께 보여도 시세 요청은 초당 1회다(응답 지연·구독 시차가 있는 현실 조건)", async () => {
     const { config, urls } = fakeApi();
+    const startedAt: number[] = [];
+    const t0 = Date.now();
+    // 응답이 300ms 걸리는 서버
+    const slow: MarketApiConfig = {
+      ...config,
+      fetch: (url, init) => {
+        startedAt.push(Date.now() - t0);
+        return new Promise((resolve) =>
+          later(() => resolve(config.fetch(url, init)), 300),
+        );
+      },
+    };
     const client = new QueryClient();
-    const list = new QueryObserver(client, quotesQueryOptions(config));
+    const list = new QueryObserver(client, quotesQueryOptions(slow));
+    const stops = [list.subscribe(() => {})];
+    // 상세 화면은 0.5초 뒤에 열린다(목록은 스택 아래에 그대로 있다)
+    await vi.advanceTimersByTimeAsync(500);
     const detail = new QueryObserver(client, {
-      ...quotesQueryOptions(config),
+      ...quotesQueryOptions(slow),
       select: (data) => data.quotes.find((q) => q.ticker === "AAPL"),
     });
-    const stops = [list.subscribe(() => {}), detail.subscribe(() => {})];
-    await vi.advanceTimersByTimeAsync(3_000);
+    stops.push(detail.subscribe(() => {}));
+    await vi.advanceTimersByTimeAsync(10_000);
     for (const stop of stops) stop();
     client.clear();
-    // 처음 1회 + 3초 동안 3회. 화면마다 따로 받았다면 8회
-    expect(urls.length).toBeLessThanOrEqual(4);
-    expect(urls.length).toBeGreaterThanOrEqual(3);
+    // 10.5초 동안 초당 1회면 11회 안팎. 화면마다 타이머가 돌면 20회 안팎
+    expect(urls.length).toBeGreaterThanOrEqual(8);
+    expect(urls.length).toBeLessThanOrEqual(12);
+    // 상세가 열릴 때 1초가 안 된 시세를 또 받지 않는다(staleTime)
+    expect(startedAt[1]).toBeGreaterThanOrEqual(1_000);
   });
 });
 
