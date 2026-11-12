@@ -1,11 +1,7 @@
 // 훅은 브라우저·RN에서 돈다. TanStack Query는 window가 없으면 서버로 보고 refetchInterval을 끄므로
 // 이 파일은 브라우저 환경에서 돌린다
 // @vitest-environment happy-dom
-import {
-  keepPreviousData,
-  QueryClient,
-  QueryObserver,
-} from "@tanstack/react-query";
+import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { historyResponse, quotesResponse } from "./api";

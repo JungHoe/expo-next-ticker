@@ -1,0 +1,45 @@
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: var(--space-md) var(--space-xl);
+  background: var(--color-sheet);
+  border-top: var(--rule-bar) solid var(--color-ink);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
+.mark {
+  font:
+    600 var(--text-title) / 1 var(--font-display),
+    var(--font-hangul);
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.notice {
+  font-size: var(--text-label);
+  color: var(--color-muted);
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+@media (max-width: 40rem) {
+  .bar {
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding-inline: var(--space-lg);
+  }
+}

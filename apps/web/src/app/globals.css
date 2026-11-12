@@ -1,49 +1,74 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Hallmark · shape: app screen · genre: editorial · theme: Almanac (by request, accent removed)
+ * nav: 상단 바(서비스 이름 + 시뮬레이션 고지) · signature: 현재가와 차트 하나 · states: loading, error, stale, offline, not-found
+ * axes: mid/grotesk-sans/neutral · posture: restrained · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S3 R5 V3 · weakest: S, 시세 화면은 서로 닮기 쉽다 → 색은 상승·하락에만 쓰고, 숫자를 소수점에 맞춘 표와 선 두 굵기로 구분한다 */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* 색·간격·글자 크기 토큰은 @ticker/tokens의 cssVariables()가 layout에서 :root에 넣는다.
+   글꼴 변수(--font-display, --font-body, --font-num)는 next/font가 <html>에 넣는다.
+   한글은 세 글꼴에 없으므로 모든 스택 끝에 --font-hangul(고딕 목록)을 붙인다. */
 
-html {
-  height: 100%;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink-2);
+  font-family: var(--font-body), var(--font-hangul);
+  font-size: var(--text-body);
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* 한국어가 단어 중간에서 줄바꿈되지 않게 한다 */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-display), var(--font-hangul);
+  font-weight: 600;
+  color: var(--color-ink);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+p {
   margin: 0;
 }
 
 a {
-  color: inherit;
-  text-decoration: none;
+  color: var(--color-ink);
+  text-underline-offset: 0.15em;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+a:hover {
+  text-decoration-thickness: 2px;
 }
+
+a:active {
+  color: var(--color-muted);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+code,
+.num {
+  font-family: var(--font-num), var(--font-hangul);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 애니메이션·전환이 없다(spec: 깜빡임·등장 효과 없음). 생기면 prefers-reduced-motion 대비를 함께 넣는다 */

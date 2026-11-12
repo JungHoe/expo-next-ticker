@@ -35,6 +35,9 @@
 | 앱 개발 서버 (Expo Go) | `pnpm --filter mobile start` |
 | 앱 번들 확인 | `pnpm --filter mobile exec expo export --platform android` |
 | 앱 의존성 추가 | `pnpm --filter mobile exec expo install <패키지>` (SDK에 맞는 버전으로 고정) |
+| 앱 화면 확인 (웹 미리보기) | `pnpm --filter mobile exec expo start --web` |
+| 웹 화면 디자인 검사 (PR 전) | ① `node ~/.claude/skills/hallmark/scripts/sloplint.mjs apps/web/src/app --scope app` ② 웹을 띄운 뒤 `… sloplint.mjs --url http://localhost:3000/<경로> --scope app --render`. 둘 다 FAIL 0 |
 
 - Node 22 이상, pnpm 12
+- 디자인 검사 도구: [Hallmark](https://github.com/nutlope/hallmark) `pnpm dlx skills add nutlope/hallmark -g --agent claude-code`, 렌더 검사용 `puppeteer-core`를 스킬 폴더에 설치하고 Chrome 필요. `--url` 모드는 렌더 규칙(대비·화면 폭)만 보고 CSS 규칙(토큰·stamp·상태)은 보지 않으므로 ①을 함께 돌린다(#8)
 - 도구 CLI(expo, eas 등)는 `npx`가 아니라 `pnpm --filter <앱> exec <cli>`로 실행한다. 필요한 CLI는 해당 앱의 devDependency로 두어 버전을 lockfile에 고정한다 — 문서가 `npx`로 안내해도 pnpm으로 바꿔 쓴다
