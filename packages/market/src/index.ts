@@ -1,5 +1,7 @@
 export type { ApiResult } from "./api";
 export { historyResponse, quotesResponse } from "./api";
+export type { MarketApiConfig, ResponseLike } from "./client";
+export { fetchHistory, fetchQuotes, MarketApiError } from "./client";
 export type {
   ErrorResponse,
   HistoryPoint,
@@ -17,6 +19,12 @@ export {
   QuoteSchema,
   QuotesResponseSchema,
 } from "./schema";
-export { historyAt, kstMidnight, priceAt, quoteAt } from "./simulation";
+export {
+  HISTORY_SHAPE,
+  historyAt,
+  kstMidnight,
+  priceAt,
+  quoteAt,
+} from "./simulation";
 export type { Ticker } from "./tickers";
 export { findTicker, TICKERS } from "./tickers";

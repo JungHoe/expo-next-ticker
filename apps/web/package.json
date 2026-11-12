@@ -9,6 +9,7 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@tanstack/react-query": "5.107.1",
     "@ticker/market": "workspace:*",
     "next": "16.4.5",
     "react": "19.3.0",

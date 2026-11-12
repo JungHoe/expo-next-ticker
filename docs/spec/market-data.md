@@ -48,6 +48,7 @@
 
 ### 스키마와 훅
 - Zod 스키마를 `packages/market`에 두고, 서버는 응답을 만들 때, 클라이언트는 받을 때 같은 스키마로 검증한다
+- 진입점: 서버에서도 쓰는 코드(스키마·생성기·API 함수·클라이언트)는 `@ticker/market`, 훅과 조회 설정은 `@ticker/market/react`. 서버 코드(Route Handler)에 React 훅이 딸려 가지 않게 나눈다(#12)
 - TanStack Query 훅: `useQuotes()`(전체 목록, 화면에서 하나만 쓴다), `useQuote(ticker)`(`useQuotes()`의 결과에서 고른다. 요청을 따로 보내지 않는다), `useHistory(ticker, range)`. API 주소는 설정으로 주입한다(웹은 같은 출처, 앱은 `EXPO_PUBLIC_API_BASE_URL`, 기본값은 배포 주소)
 
 ### 차트 좌표 계산
@@ -58,7 +59,7 @@
 |---|---|---|
 | 갱신 주기 | 시세 1초 폴링. 탭이 보이지 않으면 멈춘다 | 시세 1초 폴링. 앱이 백그라운드면 멈춘다(`AppState`) |
 | 이력 | 기간을 바꿀 때 받는다. 1시간 차트는 폴링한 시세로 마지막 점을 이어 붙인다 | 같음 |
-| 오류·재연결 | 실패하면 마지막 값을 유지하고 재시도한다. 화면 표시는 각 화면 spec | 같음. 오프라인 감지는 `@react-native-community/netinfo`(Expo Go 포함) |
+| 오류·재연결 | 시세는 재시도 없이 다음 폴링(1초 뒤)이 곧 재시도다. 이력은 확정 오류(4xx·형태 오류)는 재시도하지 않고 일시 오류만 1초 간격 2번. 실패해도 마지막 값은 남는다. 화면 표시는 각 화면 spec | 같음. 오프라인 감지는 `@react-native-community/netinfo`(Expo Go 포함). 오프라인이면 TanStack이 요청을 오류가 아니라 일시정지(`fetchStatus: "paused"`)로 둔다 |
 | 장 마감 시간 | 해당 없음(24시간 시뮬레이션) | 같음 |
 
 ## 5. 수용 기준

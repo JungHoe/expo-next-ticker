@@ -113,7 +113,11 @@ export function quoteAt(symbol: string, now: number): Quote {
   };
 }
 
-const HISTORY_SHAPE: Record<HistoryRange, { step: number; count: number }> = {
+/** 기간별 점 간격(ms)과 개수. 클라이언트도 이 간격마다 이력을 다시 받는다 */
+export const HISTORY_SHAPE: Record<
+  HistoryRange,
+  { step: number; count: number }
+> = {
   "1h": { step: 30 * SECOND, count: 121 },
   "1d": { step: 10 * MINUTE, count: 145 },
   "1w": { step: HOUR, count: 169 },
