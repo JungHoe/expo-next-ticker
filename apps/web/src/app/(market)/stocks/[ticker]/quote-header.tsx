@@ -7,6 +7,7 @@ import {
   formatSigned,
 } from "@ticker/market";
 import { useQuote } from "@ticker/market/react";
+import { StaleNotice } from "../../freshness";
 import styles from "./detail.module.css";
 
 /** 상세 머리: 티커·종목명, 현재가(이 화면의 주인공), 오늘 0시 대비 등락. 차트·기간·수치는 #15 */
@@ -42,6 +43,7 @@ export function QuoteHeader({
         )}
         <span className={styles.since}>오늘 0시 대비</span>
       </p>
+      <StaleNotice className={styles.stale} />
     </header>
   );
 }

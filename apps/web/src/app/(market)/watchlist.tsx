@@ -6,35 +6,17 @@ import {
   formatPrice,
   type Quote,
   quoteLabel,
-  secondsSince,
   TICKERS,
 } from "@ticker/market";
 import { useQuotes } from "@ticker/market/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { StaleNotice } from "./freshness";
 import styles from "./market.module.css";
 
-/**
- * active인 동안 1초마다 현재 시각으로 다시 그린다("N초 전 시세"용).
- * 렌더 중에 Date.now()를 읽지 않는다: Cache Components는 미리 렌더링할 때 이를 막는다(#13 빌드에서 확인)
- */
-function useNow(active: boolean): number {
-  const [now, setNow] = useState(0);
-  useEffect(() => {
-    if (!active) return;
-    setNow(Date.now());
-    const id = setInterval(() => setNow(Date.now()), 1_000);
-    return () => clearInterval(id);
-  }, [active]);
-  return now;
-}
-
 export function Watchlist() {
-  const { data, isError, fetchStatus, dataUpdatedAt, refetch } = useQuotes();
+  const { data, isError, fetchStatus, refetch } = useQuotes();
   const { ticker: selected } = useParams<{ ticker?: string }>();
-  const stale = Boolean(data) && (isError || fetchStatus === "paused");
-  const now = useNow(stale);
 
   return (
     <section className={styles.watchlist} aria-labelledby="watchlist-title">
@@ -42,11 +24,7 @@ export function Watchlist() {
         <h2 id="watchlist-title" className={styles.listTitle}>
           관심 종목
         </h2>
-        {stale && (
-          <output className={styles.stale}>
-            {secondsSince(dataUpdatedAt, now)}초 전 시세
-          </output>
-        )}
+        <StaleNotice className={styles.stale} />
       </header>
 
       <div className={styles.columns} aria-hidden="true">
@@ -70,12 +48,8 @@ export function Watchlist() {
       ) : isError ? (
         <Message
           text="시세를 불러오지 못했습니다"
-          action={{
-            label: fetchStatus === "fetching" ? "다시 받는 중" : "다시 시도",
-            // 받는 동안은 눌러도 같은 요청이 겹칠 뿐이라 막는다
-            disabled: fetchStatus === "fetching",
-            onPress: () => refetch(),
-          }}
+          // 폴링이 1초마다 다시 받지만, 바로 다시 받을 수 있는 버튼을 둔다. 라벨은 고정한다(바뀌면 다시 읽힌다)
+          action={{ label: "다시 시도", onPress: () => refetch() }}
         />
       ) : (
         <Skeleton />
@@ -85,7 +59,8 @@ export function Watchlist() {
 }
 
 function Row({ quote, selected }: { quote: Quote; selected: boolean }) {
-  const tone = changeTone(quote.change);
+  // 목록은 등락률을 보여 주므로 색도 보이는 등락률로 정한다(-0.01이 0.00%면 보합)
+  const tone = changeTone(quote.changePct);
   return (
     <li>
       <Link
@@ -110,11 +85,10 @@ function Row({ quote, selected }: { quote: Quote; selected: boolean }) {
 /** 실제 행과 같은 높이·칸이라 값이 들어와도 레이아웃이 밀리지 않는다 */
 function Skeleton() {
   return (
-    <ol
-      className={styles.rows}
-      aria-busy="true"
-      aria-label="시세를 불러오는 중"
-    >
+    <ol className={styles.rows} aria-busy="true">
+      <li className="visually-hidden">
+        <output>시세를 불러오는 중</output>
+      </li>
       {TICKERS.map((ticker) => (
         <li key={ticker.symbol} className={styles.row} aria-hidden="true">
           <span className={styles.symbol}>
@@ -134,16 +108,15 @@ function Message({
   action,
 }: {
   text: string;
-  action?: { label: string; disabled?: boolean; onPress: () => void };
+  action?: { label: string; onPress: () => void };
 }) {
   return (
-    <div className={styles.message} role="alert">
-      <p>{text}</p>
+    <div className={styles.message}>
+      <p role="alert">{text}</p>
       {action && (
         <button
           type="button"
           className={styles.button}
-          disabled={action.disabled}
           onClick={action.onPress}
         >
           {action.label}

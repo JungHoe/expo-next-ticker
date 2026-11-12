@@ -2,9 +2,10 @@
 /* 목록 + 상세(A안). 근거: docs/spec/watchlist.md §2, docs/spec/stock-detail.md §2 */
 
 .market {
+  /* main이 남은 높이를 채우므로 목록 배경과 선이 화면 끝까지 이어진다 */
+  flex: 1;
   display: grid;
   grid-template-columns: 340px minmax(0, 1fr);
-  min-height: 100%;
 }
 
 .list {
@@ -16,7 +17,7 @@
   min-width: 0;
 }
 
-@media (max-width: 60rem) {
+@media (width < 60rem) {
   .market {
     grid-template-columns: minmax(0, 1fr);
   }

@@ -11,7 +11,7 @@
   font-size: var(--text-label);
 }
 
-@media (max-width: 60rem) {
+@media (width < 60rem) {
   .detail {
     padding-inline: var(--space-lg);
   }
@@ -69,6 +69,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.stale {
+  font-size: var(--text-label);
+  color: var(--color-muted);
+}
+
 .since {
   font:
     400 var(--text-label) / 1.2 var(--font-body),
@@ -104,7 +109,7 @@
   block-size: 16px;
 }
 
-@media (max-width: 40rem) {
+@media (width < 40rem) {
   .price {
     min-block-size: 40px;
     font-size: var(--text-price-compact);

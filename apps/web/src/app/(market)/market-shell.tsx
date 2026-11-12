@@ -18,9 +18,8 @@ export function MarketShell({
   const { ticker } = useParams<{ ticker?: string }>();
   return (
     <div className={styles.market} data-selected={ticker ? "true" : "false"}>
-      <aside className={styles.list} aria-label="관심 종목">
-        {watchlist}
-      </aside>
+      {/* 목록 안의 section이 "관심 종목" 제목으로 이름을 가진다. 같은 이름의 랜드마크를 겹치지 않는다 */}
+      <div className={styles.list}>{watchlist}</div>
       <div className={styles.detail}>{children}</div>
     </div>
   );

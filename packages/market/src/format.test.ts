@@ -59,6 +59,10 @@ describe("quoteLabel (보조 기술이 읽는 이름)", () => {
     );
     expect(quoteLabel(quote(0, 0))).toBe("AAPL Apple, 231.42달러, 보합");
   });
+
+  test("등락이 -0.01이어도 등락률이 0.00%로 반올림되면 보합으로 읽는다(보이는 값과 맞춘다)", () => {
+    expect(quoteLabel(quote(-0.01, 0))).toBe("AAPL Apple, 231.42달러, 보합");
+  });
 });
 
 describe("secondsSince", () => {

@@ -111,6 +111,10 @@ describe("스키마", () => {
     ).toBe(false);
   });
 
+  test("빈 목록은 거부한다(watchlist.md §4: 빈 배열은 오류로 처리)", () => {
+    expect(QuotesResponseSchema.safeParse({ quotes: [] }).success).toBe(false);
+  });
+
   test("NaN·Infinity 가격은 거부한다", () => {
     const quote = quoteAt("AAPL", NOW);
     for (const price of [Number.NaN, Number.POSITIVE_INFINITY]) {

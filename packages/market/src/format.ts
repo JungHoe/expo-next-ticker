@@ -31,9 +31,12 @@ export function changeTone(change: number): ChangeTone {
   return change > 0 ? "up" : change < 0 ? "down" : "flat";
 }
 
-/** 보조 기술이 읽는 이름. "AAPL Apple, 231.42달러, 0.81% 상승" */
+/**
+ * 보조 기술이 읽는 이름. "AAPL Apple, 231.42달러, 0.81% 상승".
+ * 방향은 보이는 등락률로 정한다: 등락 -0.01이 0.00%로 반올림되면 보합이다
+ */
 export function quoteLabel(quote: Quote): string {
-  const tone = changeTone(quote.change);
+  const tone = changeTone(quote.changePct);
   const movement =
     tone === "flat"
       ? "보합"
