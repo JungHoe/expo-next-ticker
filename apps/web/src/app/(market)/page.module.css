@@ -1,16 +1,8 @@
-.intro {
+/* Hallmark · shape: app screen · theme: Almanac — 전체 stamp와 비평은 app/globals.css 첫 줄 */
+.empty {
   display: grid;
-  gap: var(--space-lg);
-  max-width: 62ch;
+  place-items: center;
+  min-block-size: 320px;
   padding: var(--space-xxxl) var(--space-xl);
-}
-
-.intro h1 {
-  font-size: var(--text-heading);
-}
-
-@media (max-width: 40rem) {
-  .intro {
-    padding: var(--space-xxl) var(--space-lg);
-  }
+  color: var(--color-muted);
 }

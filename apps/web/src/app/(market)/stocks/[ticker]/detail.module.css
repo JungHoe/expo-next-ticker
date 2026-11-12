@@ -1,0 +1,117 @@
+/* Hallmark · shape: app screen · theme: Almanac — 전체 stamp와 비평은 app/globals.css 첫 줄 */
+.detail {
+  display: grid;
+  gap: var(--space-lg);
+  padding: var(--space-xl) var(--space-xl) var(--space-xxxl);
+}
+
+.back {
+  display: none;
+  justify-self: start;
+  font-size: var(--text-label);
+}
+
+@media (max-width: 60rem) {
+  .detail {
+    padding-inline: var(--space-lg);
+  }
+
+  .back {
+    display: inline-block;
+  }
+}
+
+.head {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-md);
+  font-size: var(--text-body);
+}
+
+.ticker {
+  font:
+    500 15px / 1 var(--font-num),
+    var(--font-hangul);
+  color: var(--color-ink);
+}
+
+.name {
+  font:
+    400 var(--text-body) / 1.2 var(--font-body),
+    var(--font-hangul);
+  color: var(--color-muted);
+}
+
+/* 이 화면의 주인공. 가장 큰 글자, 자릿수가 흔들리지 않는 숫자 */
+.price {
+  min-block-size: 56px;
+  font:
+    500 var(--text-price) / 1 var(--font-num),
+    var(--font-hangul);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  color: var(--color-ink);
+}
+
+.change {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-md);
+  min-block-size: 20px;
+  font:
+    500 17px / 1.2 var(--font-num),
+    var(--font-hangul);
+  font-variant-numeric: tabular-nums;
+}
+
+.since {
+  font:
+    400 var(--text-label) / 1.2 var(--font-body),
+    var(--font-hangul);
+  color: var(--color-muted);
+}
+
+.up {
+  color: var(--color-up);
+}
+
+.down {
+  color: var(--color-down);
+}
+
+.flat {
+  color: var(--color-ink-2);
+}
+
+.pricePlaceholder,
+.changePlaceholder {
+  display: inline-block;
+  background: var(--color-paper-2);
+}
+
+.pricePlaceholder {
+  inline-size: 220px;
+  block-size: 48px;
+}
+
+.changePlaceholder {
+  inline-size: 140px;
+  block-size: 16px;
+}
+
+@media (max-width: 40rem) {
+  .price {
+    min-block-size: 40px;
+    font-size: var(--text-price-compact);
+  }
+
+  .pricePlaceholder {
+    inline-size: 160px;
+    block-size: 34px;
+  }
+}
