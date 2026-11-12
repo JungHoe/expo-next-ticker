@@ -4,6 +4,7 @@ AI가 쓴 코드의 잘못을 장치(타입·lint·테스트·리뷰·화면 확
 
 | 날짜 | 이슈·PR | AI가 틀린 것 | 잡은 장치 | 재발 방지로 바꾼 것 |
 |---|---|---|---|---|
+| 2026-11-12 | #8 | spec(`design-tokens.md` §5)에 웹 디자인 검사 기준을 "`sloplint --url` FAIL 0"으로 적었다. 그런데 `--url` 모드는 렌더 규칙만 보고 CSS 규칙(토큰·stamp·상태)은 검사하지 않아, 템플릿 페이지도 clean으로 나온다 | 검사 도구를 알려진 나쁜 페이지(아직 템플릿인 프로덕션)로 시험 | 기준을 소스 파일 모드 + `--url --render` 두 단계로 고치고 `CLAUDE.md` 명령표에 적음. 소스 모드가 stamp 형식 오류(`/*!`)와 `:active` 누락을 잡았다 |
 | 2026-11-12 | #12 · #22 | "목록+상세가 함께 보여도 초당 1회" 테스트를 두 화면이 같은 순간 구독하고 응답이 즉시 끝나는 조건으로만 썼다. 그래서 상세 진입 때 나가는 추가 요청(`staleTime` 0)과, 기본 재시도 백오프 때문에 서버 장애 표시가 약 7초 늦는 문제를 놓쳤다 | 리뷰(code-reviewer) + 요청 시각 계측 | 응답 300ms·구독 0.5초 시차 조건 테스트, `staleTime` 1초, 시세는 재시도 끔(폴링이 재시도), 이력은 확정 오류 재시도 안 함. 리뷰의 "화면마다 타이머라 초당 2회" 주장은 계측(요청 간격 1.3초로 한 박자)으로 반박되어 적용하지 않았다 |
 | 2026-11-11 | #11 · #21 | 시세 API에 CORS 헤더를 넣지 않음. 앱 화면을 확인하기로 한 Expo 웹 미리보기(`localhost:8081`)는 다른 출처라 브라우저가 응답을 막는다. curl 검증으로는 드러나지 않았다 | 리뷰(별도 code-reviewer 에이전트) | `next.config`의 `headers()`로 `/api/:path*`에 CORS. 헤드리스 Chrome으로 다른 출처에서 `fetch`하는 확인을 추가해 고치기 전 `Failed to fetch` → 고친 뒤 성공을 재현 |
 | 2026-11-11 | #7 리뷰 · #21 | AI 코드 리뷰어가 "워크스페이스 TS 패키지를 쓰려면 `next.config`에 `transpilePackages`가 필요하다"고 권고함(이전 Next.js 기준 지식) | 문서 확인(`apps/web/AGENTS.md`의 "번들된 Next.js 16 문서를 먼저 읽는다" 규칙) + 빌드: 문서에 "Turbopack transpiles workspace packages automatically", `transpilePackages` 없이 `next build`·`next start` 통과 | 권고를 적용하지 않고 #8 이슈에 정정 댓글. 리뷰 지시문에 "번들된 Next.js 문서와 대조한 뒤 지적하라"를 넣는다 |
