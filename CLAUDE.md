@@ -18,6 +18,7 @@
 - `apps/web` Next.js App Router / `apps/mobile` Expo Router / `packages/*` 공유 코드
 - 앱끼리 직접 import하지 않는다. 공유할 것은 `packages/`로 옮긴다
 - `packages/*`는 플랫폼 중립: React Native·DOM API를 import하지 않는다 — 웹과 앱이 같은 코드를 그대로 쓰기 위해
+- 웹 렌더 중에 실행될 수 있는 코드(`packages/`의 훅·조회 설정 포함)는 `Date.now()`·`Math.random()`을 읽지 않는다 — Next.js Cache Components가 미리 렌더링할 때 빌드를 막는다(#13, #16에서 두 번 걸림). 시각은 effect 안이나 응답 시각에서 얻는다
 - 모바일은 **Expo Go에 포함된 네이티브 모듈만** 쓴다. 의존성을 추가하기 전에 Expo Go 지원 여부를 확인하고, config plugin이나 커스텀 네이티브 모듈이 필요한 라이브러리는 쓰지 않는다 — 면접관이 Expo Go로 열어 봐야 한다
 
 ## 금지

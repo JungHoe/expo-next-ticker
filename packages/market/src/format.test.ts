@@ -1,9 +1,12 @@
 import { describe, expect, test } from "vitest";
 import {
   changeTone,
+  chartDescription,
   formatPercent,
   formatPrice,
   formatSigned,
+  HISTORY_RANGE_LABEL,
+  parseHistoryRange,
   quoteLabel,
   secondsSince,
 } from "./format";
@@ -73,5 +76,38 @@ describe("secondsSince", () => {
 
   test("시계가 어긋나 미래 시각이 와도 음수가 되지 않는다", () => {
     expect(secondsSince(5_000, 1_000)).toBe(0);
+  });
+});
+
+describe("기간", () => {
+  test("주소의 range를 해석하고, 모르면 1시간", () => {
+    expect(parseHistoryRange("1d")).toBe("1d");
+    expect(parseHistoryRange("1m")).toBe("1m");
+    expect(parseHistoryRange("2y")).toBe("1h");
+    expect(parseHistoryRange(null)).toBe("1h");
+    expect(parseHistoryRange(undefined)).toBe("1h");
+    expect(parseHistoryRange(["1w"])).toBe("1w");
+  });
+
+  test("이름", () => {
+    expect(HISTORY_RANGE_LABEL).toEqual({
+      "1h": "1시간",
+      "1d": "1일",
+      "1w": "1주",
+      "1m": "1개월",
+    });
+  });
+});
+
+describe("chartDescription (차트 대체 텍스트)", () => {
+  test("시작·끝·고가·저가를 문장으로", () => {
+    const points = [229.8, 232.1, 228.95, 231.42].map((p, i) => ({ t: i, p }));
+    expect(chartDescription("AAPL", "1h", points)).toBe(
+      "AAPL 최근 1시간, 229.80에서 231.42, 고가 232.10, 저가 228.95",
+    );
+  });
+
+  test("점이 없으면 undefined", () => {
+    expect(chartDescription("AAPL", "1h", [])).toBeUndefined();
   });
 });

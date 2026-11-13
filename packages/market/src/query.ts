@@ -14,6 +14,17 @@ import type { HistoryPoint, HistoryRange, Quote } from "./schema";
 import { HISTORY_SHAPE } from "./simulation";
 
 export const QUOTES_REFETCH_MS = 1_000;
+/** 초 경계에서 이만큼 뒤에 요청한다. 기기 시계가 이 안에서 맞으면 모두 같은 초의 시세를 받는다 */
+const TICK_PHASE_MS = 150;
+
+/**
+ * 다음 "초 경계 + 150ms"까지 남은 시간(0 < 값 ≤ 1000).
+ * 고정 1초 간격이면 클라이언트마다 박자가 달라 한 순간에 서로 다른 초의 가격을 본다(#16에서 계측)
+ */
+export function msUntilNextTick(now: number): number {
+  const wait = QUOTES_REFETCH_MS - (now % QUOTES_REFETCH_MS) + TICK_PHASE_MS;
+  return wait > QUOTES_REFETCH_MS ? wait - QUOTES_REFETCH_MS : wait;
+}
 
 /**
  * 전체 목록 하나. 목록과 상세가 같은 키를 쓴다. 화면마다 폴링 타이머가 있어도 TanStack이 데이터가
@@ -23,7 +34,13 @@ export function quotesQueryOptions(config: MarketApiConfig) {
   return queryOptions({
     queryKey: ["market", "quotes"] as const,
     queryFn: ({ signal }) => fetchQuotes(config, signal),
-    refetchInterval: QUOTES_REFETCH_MS,
+    // 시계에 맞춘 박자. TanStack은 응답(성공·실패)이 올 때마다 이 함수로 다음 간격을 다시 잡으므로
+    // 마지막 응답 시각이 곧 지금이다. Date.now()를 쓰지 않는다: 렌더 중에도 불려 Next.js Cache
+    // Components 빌드가 막는다(#16 빌드에서 확인). 첫 응답 전(0)에는 첫 요청이 진행 중이라 겹치지 않는다
+    refetchInterval: (query) =>
+      msUntilNextTick(
+        Math.max(query.state.dataUpdatedAt, query.state.errorUpdatedAt),
+      ),
     // 웹: 탭이 보이지 않으면, 앱: focusManager를 AppState에 연결해 백그라운드면 멈춘다
     refetchIntervalInBackground: false,
     // 1초 안에 연 화면은 새로 받지 않는다(상세 진입 때 추가 요청 방지)

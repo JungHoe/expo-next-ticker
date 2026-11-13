@@ -13,6 +13,7 @@ import {
 } from "./client";
 import {
   historyQueryOptions,
+  msUntilNextTick,
   quotesQueryOptions,
   withLivePoint,
 } from "./query";
@@ -96,7 +97,8 @@ describe("조회 설정", () => {
   test("시세는 1초마다, 화면이 보이지 않으면 멈춘다", () => {
     const options = quotesQueryOptions(fakeApi().config);
     expect(options.queryKey).toEqual(["market", "quotes"]);
-    expect(options.refetchInterval).toBe(1_000);
+    // 간격은 고정 1초가 아니라 "다음 초 경계 + 150ms"까지(아래 박자 테스트)
+    expect(typeof options.refetchInterval).toBe("function");
     expect(options.refetchIntervalInBackground).toBe(false);
     // 1초 안에 다시 연 화면은 새로 받지 않고, 실패는 다음 폴링이 곧 재시도다
     expect(options.staleTime).toBe(1_000);
@@ -147,6 +149,15 @@ describe("조회 설정", () => {
   });
 });
 
+describe("폴링 박자", () => {
+  test("다음 초 경계 + 150ms까지 기다린다(모든 클라이언트가 같은 초의 시세를 받게)", () => {
+    expect(msUntilNextTick(10_700)).toBe(450);
+    expect(msUntilNextTick(10_000)).toBe(150);
+    expect(msUntilNextTick(10_100)).toBe(50);
+    expect(msUntilNextTick(10_150)).toBe(1_000);
+  });
+});
+
 describe("요청 공유", () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
@@ -181,8 +192,37 @@ describe("요청 공유", () => {
     // 10.5초 동안 초당 1회면 11회 안팎. 화면마다 타이머가 돌면 20회 안팎
     expect(urls.length).toBeGreaterThanOrEqual(8);
     expect(urls.length).toBeLessThanOrEqual(12);
-    // 상세가 열릴 때 1초가 안 된 시세를 또 받지 않는다(staleTime)
-    expect(startedAt[1]).toBeGreaterThanOrEqual(1_000);
+    // 상세가 열린 순간(500ms)에 1초가 안 된 시세를 또 받지 않는다(staleTime)
+    expect(startedAt).not.toContain(500);
+    // 두 번째 요청부터는 초 경계 + 150ms 박자에 맞는다
+    const phases = startedAt.slice(1).map((t) => (t0 + t) % 1_000);
+    expect(new Set(phases)).toEqual(new Set([150]));
+  });
+});
+
+describe("오류만 이어질 때", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  test("값을 한 번도 못 받고 실패만 이어져도 초당 1회를 넘지 않는다", async () => {
+    let calls = 0;
+    const failing: MarketApiConfig = {
+      baseUrl: "",
+      fetch: async () => {
+        calls++;
+        return { ok: false, status: 503, json: async () => undefined };
+      },
+    };
+    const client = new QueryClient();
+    const stop = new QueryObserver(
+      client,
+      quotesQueryOptions(failing),
+    ).subscribe(() => {});
+    await vi.advanceTimersByTimeAsync(5_000);
+    stop();
+    client.clear();
+    expect(calls).toBeLessThanOrEqual(6);
+    expect(calls).toBeGreaterThanOrEqual(4);
   });
 });
 

@@ -2,7 +2,12 @@
  * 웹·앱이 같이 쓰는 표시 규칙(watchlist.md §2, stock-detail.md §2).
  * Intl 대신 직접 만들어 Node·브라우저·Hermes가 같은 글자를 낸다.
  */
-import type { Quote } from "./schema";
+import {
+  HISTORY_RANGES,
+  type HistoryPoint,
+  type HistoryRange,
+  type Quote,
+} from "./schema";
 
 /** 1234.5 → "1,234.50". 소수 둘째 자리 고정이라 값이 바뀌어도 자릿수가 흔들리지 않는다 */
 export function formatPrice(value: number): string {
@@ -47,4 +52,37 @@ export function quoteLabel(quote: Quote): string {
 /** 마지막으로 받은 뒤 지난 초. "N초 전 시세"에 쓴다 */
 export function secondsSince(time: number, now: number): number {
   return Math.max(0, Math.floor((now - time) / 1_000));
+}
+
+export const HISTORY_RANGE_LABEL: Record<HistoryRange, string> = {
+  "1h": "1시간",
+  "1d": "1일",
+  "1w": "1주",
+  "1m": "1개월",
+};
+
+/**
+ * 주소의 range(웹 ?range=, 앱 경로 파라미터)를 해석한다. 모르는 값이면 기본 1시간(stock-detail.md §3).
+ * Expo Router는 같은 이름 파라미터가 여러 개면 배열을 준다
+ */
+export function parseHistoryRange(
+  value: string | string[] | null | undefined,
+): HistoryRange {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return (HISTORY_RANGES as readonly string[]).includes(raw ?? "")
+    ? (raw as HistoryRange)
+    : "1h";
+}
+
+/** 차트 대체 텍스트. "AAPL 최근 1시간, 229.80에서 231.42, 고가 232.10, 저가 228.95" */
+export function chartDescription(
+  ticker: string,
+  range: HistoryRange,
+  points: readonly HistoryPoint[],
+): string | undefined {
+  const first = points[0];
+  const last = points.at(-1);
+  if (!first || !last) return undefined;
+  const prices = points.map((point) => point.p);
+  return `${ticker} 최근 ${HISTORY_RANGE_LABEL[range]}, ${formatPrice(first.p)}에서 ${formatPrice(last.p)}, 고가 ${formatPrice(Math.max(...prices))}, 저가 ${formatPrice(Math.min(...prices))}`;
 }

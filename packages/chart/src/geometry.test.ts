@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { type ChartPoint, chartGeometry } from "./geometry";
+import {
+  CHART_MARGIN,
+  type ChartPoint,
+  chartGeometry,
+  LAST_POINT_RADIUS,
+  referenceLabelY,
+  xLabelAnchor,
+} from "./geometry";
 
 const SECOND = 1_000;
 const MINUTE = 60 * SECOND;
@@ -272,4 +279,23 @@ test("점이 하나면 오른쪽 끝 가운데에 놓고 x축 라벨은 없다",
   });
   expect(g.last).toEqual({ x: WIDTH, y: HEIGHT / 2 });
   expect(g.xLabels).toEqual([]);
+});
+
+describe("그리는 쪽이 같이 쓰는 배치 규칙", () => {
+  test("x 라벨은 양 끝 24px 안이면 바깥쪽으로 붙인다", () => {
+    expect(xLabelAnchor(10, 600)).toBe("start");
+    expect(xLabelAnchor(300, 600)).toBe("middle");
+    expect(xLabelAnchor(590, 600)).toBe("end");
+  });
+
+  test("기준가 라벨은 선 위에, 위쪽 경계 가까이면 선 아래에", () => {
+    expect(referenceLabelY(100)).toBe(94);
+    expect(referenceLabelY(5)).toBe(19);
+  });
+
+  test("여백은 극값의 선 두께·마지막 점이 잘리지 않을 만큼, 오른쪽은 y축 값 자리", () => {
+    expect(CHART_MARGIN.left).toBeGreaterThanOrEqual(LAST_POINT_RADIUS);
+    expect(CHART_MARGIN.top).toBeGreaterThanOrEqual(LAST_POINT_RADIUS);
+    expect(CHART_MARGIN.right).toBeGreaterThanOrEqual(56);
+  });
 });

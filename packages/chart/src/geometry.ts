@@ -182,3 +182,25 @@ export function chartGeometry({
     domain: { min, max },
   };
 }
+
+/** 그림 영역 둘레 여백(px). 극값의 선 두께·마지막 점이 잘리지 않게, 오른쪽은 y축 값 자리 */
+export const CHART_MARGIN = { top: 8, right: 64, bottom: 28, left: 4 } as const;
+/** 마지막 점 반지름(px). 지름 6px(stock-detail.md §2) */
+export const LAST_POINT_RADIUS = 3;
+
+const EDGE = 24;
+
+/** x 라벨이 양 끝 24px 안이면 영역 밖으로 넘치지 않게 바깥쪽으로 붙인다 */
+export function xLabelAnchor(
+  x: number,
+  width: number,
+): "start" | "middle" | "end" {
+  if (x < EDGE) return "start";
+  if (x > width - EDGE) return "end";
+  return "middle";
+}
+
+/** 기준가 라벨 y(글자 기준선). 선 위 6px, 위쪽 경계 가까이면 선 아래 14px */
+export function referenceLabelY(referenceY: number): number {
+  return referenceY < 14 ? referenceY + 14 : referenceY - 6;
+}

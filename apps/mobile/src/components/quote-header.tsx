@@ -128,3 +128,56 @@ export function QuoteHeader({
     </View>
   );
 }
+
+/** 기준가·고가·저가. 값이 오기 전에도 자리를 잡아 밀리지 않는다 */
+export function QuoteFacts({ ticker }: { ticker: string }) {
+  const { data: quote } = useQuote(ticker);
+  const { colors, fonts, space, text, rule } = useTheme();
+  const facts = [
+    ["기준가", quote?.base],
+    ["고가", quote?.high],
+    ["저가", quote?.low],
+  ] as const;
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        borderTopWidth: rule.bar,
+        borderTopColor: colors["rule-2"],
+        paddingTop: space.md,
+      }}
+    >
+      {facts.map(([label, value]) => (
+        <View
+          key={label}
+          style={{ flex: 1 }}
+          accessible
+          accessibilityLabel={
+            value === undefined ? label : `${label} ${formatPrice(value)}`
+          }
+        >
+          <Text
+            style={{
+              fontFamily: fonts.body,
+              fontSize: text.label,
+              color: colors.muted,
+            }}
+          >
+            {label}
+          </Text>
+          <Text
+            style={{
+              fontFamily: fonts.numMedium,
+              fontSize: text.body,
+              lineHeight: text.body * 1.4,
+              fontVariant: ["tabular-nums"],
+              color: colors.ink,
+            }}
+          >
+            {value === undefined ? " " : formatPrice(value)}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}

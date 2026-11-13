@@ -1,34 +1,26 @@
 "use client";
 
-import { chartGeometry } from "@ticker/chart";
+import {
+  chartGeometry,
+  LAST_POINT_RADIUS,
+  CHART_MARGIN as MARGIN,
+  referenceLabelY,
+  xLabelAnchor,
+} from "@ticker/chart";
 import {
   changeTone,
+  chartDescription,
   formatPrice,
+  HISTORY_RANGE_LABEL,
   HISTORY_RANGES,
   type HistoryRange,
+  parseHistoryRange,
 } from "@ticker/market";
 import { useHistory, useQuote, withLivePoint } from "@ticker/market/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import styles from "./detail.module.css";
-
-const RANGE_LABEL: Record<HistoryRange, string> = {
-  "1h": "1시간",
-  "1d": "1일",
-  "1w": "1주",
-  "1m": "1개월",
-};
-
-/** 그림 영역 둘레 여백. 극값의 선 두께·마지막 점이 잘리지 않게, 오른쪽은 y축 값 자리 */
-const MARGIN = { top: 8, right: 64, bottom: 28, left: 4 };
-const LAST_POINT_RADIUS = 3;
-
-function parseRange(value: string | null): HistoryRange {
-  return (HISTORY_RANGES as readonly string[]).includes(value ?? "")
-    ? (value as HistoryRange)
-    : "1h";
-}
 
 /** 컨테이너 크기를 잰다. 차트를 실제 픽셀로 계산해야 휴대폰에서도 글자가 작아지지 않는다 */
 function useSize<T extends HTMLElement>() {
@@ -55,7 +47,7 @@ function useSize<T extends HTMLElement>() {
 
 export function PriceChart({ ticker }: { ticker: string }) {
   // 기간은 주소에 둔다: 새로고침·공유해도 같은 기간이 열린다(stock-detail.md §3)
-  const range = parseRange(useSearchParams().get("range"));
+  const range = parseHistoryRange(useSearchParams().get("range"));
   return (
     <section className={styles.chartSection} aria-label="가격 차트">
       <nav className={styles.ranges} aria-label="기간">
@@ -68,7 +60,7 @@ export function PriceChart({ ticker }: { ticker: string }) {
             className={styles.range}
             aria-current={value === range ? "true" : undefined}
           >
-            {RANGE_LABEL[value]}
+            {HISTORY_RANGE_LABEL[value]}
           </Link>
         ))}
       </nav>
@@ -110,16 +102,13 @@ function Chart({ ticker, range }: { ticker: string; range: HistoryRange }) {
     [points, plotWidth, plotHeight, base],
   );
 
-  const first = points[0];
   const last = points.at(-1);
   const tone =
     quote && last ? changeTone(last.p - quote.base) : ("flat" as const);
   // 기간을 바꾸는 동안에는 이전 기간의 그림이라 새 기간 이름으로 설명하지 않는다(#15 리뷰)
   const description = history.isPlaceholderData
     ? "차트를 불러오는 중"
-    : first && last && geometry?.domain
-      ? `${ticker} 최근 ${RANGE_LABEL[range]}, ${formatPrice(first.p)}에서 ${formatPrice(last.p)}, 고가 ${formatPrice(Math.max(...points.map((p) => p.p)))}, 저가 ${formatPrice(Math.min(...points.map((p) => p.p)))}`
-      : undefined;
+    : chartDescription(ticker, range, points);
 
   return (
     <div
@@ -182,18 +171,6 @@ function Chart({ ticker, range }: { ticker: string; range: HistoryRange }) {
                   y2={geometry.referenceY}
                   className={styles.reference}
                 />
-                <text
-                  x={4}
-                  // 위쪽 경계 가까이면 선 아래에 둔다(여백 밖으로 나가지 않게)
-                  y={
-                    geometry.referenceY < 14
-                      ? geometry.referenceY + 14
-                      : geometry.referenceY - 6
-                  }
-                  className={styles.referenceLabel}
-                >
-                  기준가 {formatPrice(quote.base)}
-                </text>
               </g>
             )}
             {geometry.xLabels.map((label) => (
@@ -201,13 +178,7 @@ function Chart({ ticker, range }: { ticker: string; range: HistoryRange }) {
                 key={label.t}
                 x={label.x}
                 y={plot.height + 20}
-                textAnchor={
-                  label.x < 24
-                    ? "start"
-                    : label.x > plot.width - 24
-                      ? "end"
-                      : "middle"
-                }
+                textAnchor={xLabelAnchor(label.x, plot.width)}
                 className={styles.axis}
               >
                 {label.text}
@@ -224,6 +195,17 @@ function Chart({ ticker, range }: { ticker: string; range: HistoryRange }) {
                 r={LAST_POINT_RADIUS}
                 className={`${styles.lastPoint} ${styles[tone]}`}
               />
+            )}
+            {/* 기준가 라벨은 가격 선 위에 그린다(SVG는 나중에 그린 것이 위에 온다) */}
+            {geometry.referenceY !== null && quote && (
+              <text
+                x={4}
+                // 위쪽 경계 가까이면 선 아래에 둔다(여백 밖으로 나가지 않게)
+                y={referenceLabelY(geometry.referenceY)}
+                className={styles.referenceLabel}
+              >
+                기준가 {formatPrice(quote.base)}
+              </text>
             )}
           </g>
         </svg>
