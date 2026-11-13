@@ -1,6 +1,8 @@
 /* Hallmark · shape: app screen · theme: Almanac — 전체 stamp와 비평은 app/globals.css 첫 줄 */
 .detail {
   display: grid;
+  /* 열 폭이 내용(차트 SVG)에 끌려가지 않게 한다 */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-lg);
   padding: var(--space-xl) var(--space-xl) var(--space-xxxl);
 }
@@ -74,6 +76,12 @@
   color: var(--color-muted);
 }
 
+.changeValue {
+  display: inline-block;
+  /* 값이 들어와도 옆 문구가 움직이지 않게 고정폭 숫자 15자리를 잡는다 */
+  min-inline-size: 15ch;
+}
+
 .since {
   font:
     400 var(--text-label) / 1.2 var(--font-body),
@@ -118,5 +126,190 @@
   .pricePlaceholder {
     inline-size: 160px;
     block-size: 34px;
+  }
+}
+
+/* 차트(stock-detail.md §2 차트 규칙) */
+
+.chartSection {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.ranges {
+  display: flex;
+}
+
+.range {
+  min-block-size: 32px;
+  padding: var(--space-sm) var(--space-md);
+  margin-inline-end: -1px;
+  font:
+    500 var(--text-label) / 1 var(--font-display),
+    var(--font-hangul);
+  color: var(--color-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-control);
+}
+
+.range:hover {
+  color: var(--color-ink);
+}
+
+.range:active {
+  background: var(--color-paper-2);
+}
+
+.range:focus-visible,
+.button:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+.range[aria-current="true"] {
+  position: relative;
+  z-index: 1;
+  color: var(--color-ink);
+  border-color: var(--color-ink);
+}
+
+/* 차트 자리는 높이를 고정해 값·기간이 바뀌어도 아래가 밀리지 않는다 */
+.chart,
+.chartFallback {
+  block-size: 260px;
+}
+
+/* 틀의 폭은 바깥 칸이 정하고, SVG는 그 안에 겹쳐 놓는다.
+   SVG가 틀 폭을 정하면 창을 줄여도 차트가 줄지 않는다(ResizeObserver가 자기 폭을 계속 잰다, #15) */
+.chart {
+  position: relative;
+  min-inline-size: 0;
+}
+
+.chartFallback {
+  background: var(--color-paper-2);
+}
+
+.rangesFallback {
+  block-size: 32px;
+}
+
+.chart[data-switching="true"] .svg {
+  opacity: 0.45;
+}
+
+.svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: visible;
+}
+
+.grid {
+  stroke: var(--color-rule);
+  stroke-width: 1;
+}
+
+.axis {
+  font:
+    400 11px var(--font-num),
+    var(--font-hangul);
+  fill: var(--color-muted);
+}
+
+.reference {
+  stroke: var(--color-rule-2);
+  stroke-width: 1;
+}
+
+.referenceLabel {
+  font:
+    400 12px var(--font-body),
+    var(--font-hangul);
+  fill: var(--color-muted);
+  /* 선과 겹쳐도 읽히게 바탕색 테두리를 먼저 칠한다 */
+  paint-order: stroke;
+  stroke: var(--color-paper);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.lastPoint {
+  fill: currentColor;
+}
+
+.chartMessage {
+  display: grid;
+  gap: var(--space-md);
+  justify-items: start;
+  padding-block: var(--space-xl);
+}
+
+.button {
+  min-block-size: 36px;
+  padding: var(--space-sm) var(--space-lg);
+  font:
+    500 var(--text-label) / 1 var(--font-display),
+    var(--font-hangul);
+  color: var(--color-ink);
+  background: transparent;
+  border: var(--rule-hair) solid var(--color-ink);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--color-paper-2);
+}
+
+.button:active {
+  background: var(--color-paper);
+}
+
+.button:disabled {
+  color: var(--color-muted);
+  border-color: var(--color-rule);
+}
+
+/* 수치: 기준가·고가·저가 */
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  border-top: var(--rule-bar) solid var(--color-rule-2);
+}
+
+.facts div {
+  padding-block-start: var(--space-md);
+}
+
+.facts dt {
+  font-size: var(--text-label);
+  color: var(--color-muted);
+}
+
+.facts dd {
+  margin: 0;
+  font:
+    500 var(--text-body) / 1.4 var(--font-num),
+    var(--font-hangul);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink);
+}
+
+@media (width < 40rem) {
+  .chart,
+  .chartFallback {
+    block-size: 220px;
   }
 }
