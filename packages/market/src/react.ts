@@ -12,6 +12,7 @@ export {
 } from "./hooks";
 export {
   historyQueryOptions,
+  msUntilNextTick,
   QUOTES_REFETCH_MS,
   quotesQueryOptions,
   withLivePoint,

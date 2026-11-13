@@ -5,9 +5,12 @@ export { fetchHistory, fetchQuotes, MarketApiError } from "./client";
 export type { ChangeTone } from "./format";
 export {
   changeTone,
+  chartDescription,
   formatPercent,
   formatPrice,
   formatSigned,
+  HISTORY_RANGE_LABEL,
+  parseHistoryRange,
   quoteLabel,
   secondsSince,
 } from "./format";
