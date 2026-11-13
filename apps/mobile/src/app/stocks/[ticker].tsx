@@ -2,7 +2,8 @@ import { findTicker } from "@ticker/market";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { ScrollView } from "react-native";
 import { Message } from "../../components/message";
-import { QuoteHeader } from "../../components/quote-header";
+import { PriceChart } from "../../components/price-chart";
+import { QuoteFacts, QuoteHeader } from "../../components/quote-header";
 import { useTheme } from "../../lib/theme";
 
 export default function StockScreen() {
@@ -26,6 +27,8 @@ export default function StockScreen() {
         options={{ title: listed.symbol, headerBackTitle: "관심 종목" }}
       />
       <QuoteHeader ticker={listed.symbol} name={listed.name} />
+      <PriceChart ticker={listed.symbol} />
+      <QuoteFacts ticker={listed.symbol} />
     </ScrollView>
   );
 }
