@@ -111,11 +111,6 @@ export function Watchlist() {
       keyExtractor={(quote) => quote.ticker}
       ListHeaderComponent={header}
       renderItem={({ item }) => <Row quote={item} />}
-      getItemLayout={(_, index) => ({
-        length: ROW_HEIGHT,
-        offset: ROW_HEIGHT * index,
-        index,
-      })}
     />
   );
 }
@@ -131,20 +126,21 @@ function Row({ quote }: { quote: Quote }) {
       href={{ pathname: "/stocks/[ticker]", params: { ticker: quote.ticker } }}
       asChild
     >
+      {/* Link asChild는 자식의 함수형 style을 병합하며 버린다. 눌림 상태는 children 함수로 받아 틀에 넘긴다(#14 리뷰) */}
       <Pressable
         accessibilityRole="link"
         accessibilityLabel={quoteLabel(quote)}
-        style={({ pressed }) => ({
-          backgroundColor: pressed ? colors["paper-2"] : "transparent",
-        })}
       >
-        <RowFrame
-          symbol={quote.ticker}
-          name={quote.name}
-          price={formatPrice(quote.price)}
-          percent={formatPercent(quote.changePct)}
-          percentColor={toneColor}
-        />
+        {({ pressed }) => (
+          <RowFrame
+            symbol={quote.ticker}
+            name={quote.name}
+            price={formatPrice(quote.price)}
+            percent={formatPercent(quote.changePct)}
+            percentColor={toneColor}
+            pressed={pressed}
+          />
+        )}
       </Pressable>
     </Link>
   );
@@ -157,12 +153,14 @@ function RowFrame({
   price,
   percent,
   percentColor,
+  pressed = false,
 }: {
   symbol: string;
   name: string;
   price?: string;
   percent?: string;
   percentColor?: string;
+  pressed?: boolean;
 }) {
   const { colors, fonts, space, text, rule } = useTheme();
   const number = {
@@ -180,8 +178,10 @@ function RowFrame({
   return (
     <View
       style={{
-        height: ROW_HEIGHT,
+        // 최소 높이: 기기 글꼴 크기를 키워도 잘리지 않고, 뼈대와 실제 행이 같은 높이에서 시작한다
+        minHeight: ROW_HEIGHT,
         flexDirection: "row",
+        backgroundColor: pressed ? colors["paper-2"] : "transparent",
         alignItems: "center",
         gap: space.md,
         paddingHorizontal: space.lg,

@@ -18,7 +18,7 @@ export function QuoteHeader({
   ticker: string;
   name: string;
 }) {
-  const { data: quote, isError, refetch } = useQuote(ticker);
+  const { data: quote, isError, fetchStatus, refetch } = useQuote(ticker);
   const { colors, fonts, space, text } = useTheme();
   const tone = quote ? changeTone(quote.change) : "flat";
   const toneColor =
@@ -48,7 +48,9 @@ export function QuoteHeader({
           {name}
         </Text>
       </View>
-      {isError && !quote ? (
+      {!quote && fetchStatus === "paused" ? (
+        <Message text="오프라인입니다. 연결되면 다시 받습니다" />
+      ) : isError && !quote ? (
         <Message
           text="시세를 불러오지 못했습니다"
           action={{ label: "다시 시도", onPress: () => refetch() }}
@@ -71,6 +73,9 @@ export function QuoteHeader({
               </Text>
             ) : (
               <View
+                accessible
+                accessibilityLabel="시세를 불러오는 중"
+                accessibilityState={{ busy: true }}
                 style={{
                   width: 160,
                   height: 34,

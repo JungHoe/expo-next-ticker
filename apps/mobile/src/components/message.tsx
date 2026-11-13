@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from "react-native";
+import { useEffect } from "react";
+import { AccessibilityInfo, Pressable, Text, View } from "react-native";
 import { useTheme } from "../lib/theme";
 
 /** 오류·오프라인 안내와 선택적인 동작 하나. 라벨은 고정한다(바뀌면 다시 읽힌다) */
@@ -10,6 +11,10 @@ export function Message({
   action?: { label: string; onPress: () => void };
 }) {
   const { colors, fonts, space, text, rule, radius } = useTheme();
+  // accessibilityRole="alert"만으로는 나타날 때 읽힌다는 보장이 없어 직접 한 번 알린다(#14 리뷰)
+  useEffect(() => {
+    AccessibilityInfo.announceForAccessibility(message);
+  }, [message]);
   return (
     <View
       style={{ gap: space.md, padding: space.lg, alignItems: "flex-start" }}
