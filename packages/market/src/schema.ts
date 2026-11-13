@@ -23,7 +23,10 @@ export const QuoteSchema = z.object({
 });
 export type Quote = z.infer<typeof QuoteSchema>;
 
-export const QuotesResponseSchema = z.object({ quotes: z.array(QuoteSchema) });
+// 빈 목록은 오류다(watchlist.md §4). 고정 목록이라 정상 응답은 항상 1종목 이상이다
+export const QuotesResponseSchema = z.object({
+  quotes: z.array(QuoteSchema).min(1),
+});
 export type QuotesResponse = z.infer<typeof QuotesResponseSchema>;
 
 export const HistoryPointSchema = z.object({

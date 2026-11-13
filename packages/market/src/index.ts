@@ -2,6 +2,15 @@ export type { ApiResult } from "./api";
 export { historyResponse, quotesResponse } from "./api";
 export type { MarketApiConfig, ResponseLike } from "./client";
 export { fetchHistory, fetchQuotes, MarketApiError } from "./client";
+export type { ChangeTone } from "./format";
+export {
+  changeTone,
+  formatPercent,
+  formatPrice,
+  formatSigned,
+  quoteLabel,
+  secondsSince,
+} from "./format";
 export type {
   ErrorResponse,
   HistoryPoint,

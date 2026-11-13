@@ -65,6 +65,15 @@ a:active {
   outline-offset: 2px;
 }
 
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 code,
 .num {
   font-family: var(--font-num), var(--font-hangul);
