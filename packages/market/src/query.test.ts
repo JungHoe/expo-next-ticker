@@ -200,6 +200,10 @@ describe("withLivePoint", () => {
     ]);
   });
 
+  test("이력을 아직 못 받았으면(빈 배열) 시세 하나로 점을 만들지 않는다", () => {
+    expect(withLivePoint([], quoteAt("AAPL", NOW))).toEqual([]);
+  });
+
   test("시세가 없거나 마지막 점보다 오래되면 그대로 둔다", () => {
     expect(withLivePoint(points, undefined)).toBe(points);
     expect(withLivePoint(points, quoteAt("AAPL", NOW - 45_000))).toBe(points);

@@ -67,6 +67,7 @@ export function withLivePoint(
   quote: Quote | undefined,
 ): HistoryPoint[] {
   const last = points.at(-1);
-  if (!quote || (last && quote.asOf <= last.t)) return points;
+  // 이력이 오기 전에는 붙이지 않는다. 점 하나만 먼저 그려졌다가 선으로 바뀌는 깜빡임을 막는다(#15 리뷰)
+  if (!quote || !last || quote.asOf <= last.t) return points;
   return [...points, { t: quote.asOf, p: quote.price }];
 }

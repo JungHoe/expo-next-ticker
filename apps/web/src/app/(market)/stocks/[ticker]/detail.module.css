@@ -229,6 +229,11 @@
     400 12px var(--font-body),
     var(--font-hangul);
   fill: var(--color-muted);
+  /* 선과 겹쳐도 읽히게 바탕색 테두리를 먼저 칠한다 */
+  paint-order: stroke;
+  stroke: var(--color-paper);
+  stroke-width: 3px;
+  stroke-linejoin: round;
 }
 
 .line {

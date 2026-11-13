@@ -10,7 +10,7 @@ import {
 import { useHistory, useQuote, withLivePoint } from "@ticker/market/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import styles from "./detail.module.css";
 
 const RANGE_LABEL: Record<HistoryRange, string> = {
@@ -36,9 +36,12 @@ function useSize<T extends HTMLElement>() {
   const [size, setSize] = useState<{ width: number; height: number } | null>(
     null,
   );
-  useEffect(() => {
+  // 첫 그림 전에 한 번 재서 첫 프레임부터 차트를 그린다. 이후 변화는 observer가 맡는다(#15 리뷰)
+  useLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;
+    const rect = element.getBoundingClientRect();
+    setSize({ width: rect.width, height: rect.height });
     const observer = new ResizeObserver(([entry]) => {
       if (!entry) return;
       const { width, height } = entry.contentRect;
@@ -111,8 +114,10 @@ function Chart({ ticker, range }: { ticker: string; range: HistoryRange }) {
   const last = points.at(-1);
   const tone =
     quote && last ? changeTone(last.p - quote.base) : ("flat" as const);
-  const description =
-    first && last && geometry?.domain
+  // 기간을 바꾸는 동안에는 이전 기간의 그림이라 새 기간 이름으로 설명하지 않는다(#15 리뷰)
+  const description = history.isPlaceholderData
+    ? "차트를 불러오는 중"
+    : first && last && geometry?.domain
       ? `${ticker} 최근 ${RANGE_LABEL[range]}, ${formatPrice(first.p)}에서 ${formatPrice(last.p)}, 고가 ${formatPrice(Math.max(...points.map((p) => p.p)))}, 저가 ${formatPrice(Math.min(...points.map((p) => p.p)))}`
       : undefined;
 
@@ -135,6 +140,10 @@ function Chart({ ticker, range }: { ticker: string; range: HistoryRange }) {
           >
             다시 시도
           </button>
+        </div>
+      ) : history.data && !history.isPlaceholderData && points.length === 0 ? (
+        <div className={styles.chartMessage}>
+          <p>이 기간에 표시할 시세가 없습니다</p>
         </div>
       ) : size && plot && geometry && geometry.path ? (
         <svg
@@ -175,7 +184,12 @@ function Chart({ ticker, range }: { ticker: string; range: HistoryRange }) {
                 />
                 <text
                   x={4}
-                  y={geometry.referenceY - 6}
+                  // 위쪽 경계 가까이면 선 아래에 둔다(여백 밖으로 나가지 않게)
+                  y={
+                    geometry.referenceY < 14
+                      ? geometry.referenceY + 14
+                      : geometry.referenceY - 6
+                  }
                   className={styles.referenceLabel}
                 >
                   기준가 {formatPrice(quote.base)}
