@@ -1,7 +1,9 @@
 import { findTicker, TICKERS } from "@ticker/market";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { stockMetadata } from "../../../stock-metadata";
 import styles from "./detail.module.css";
 import { PriceChart } from "./price-chart";
 import { QuoteFacts, QuoteHeader } from "./quote-header";
@@ -12,6 +14,15 @@ import { QuoteFacts, QuoteHeader } from "./quote-header";
  */
 export function generateStaticParams() {
   return TICKERS.map((ticker) => ({ ticker: ticker.symbol }));
+}
+
+/** 종목명은 고정 목록에서 온다. 요청·시각에 따라 바뀌지 않으므로 미리 렌더링한 HTML에 들어간다 */
+export async function generateMetadata({
+  params,
+}: PageProps<"/stocks/[ticker]">): Promise<Metadata> {
+  const listed = findTicker((await params).ticker);
+  // 목록에 없는 티커는 proxy가 렌더 전에 404로 보낸다. 여기 오면 메타를 만들지 않는다
+  return listed ? stockMetadata(listed) : {};
 }
 
 export default async function StockPage({
