@@ -4,6 +4,7 @@ AI가 쓴 코드의 잘못을 장치(타입·lint·테스트·리뷰·화면 확
 
 | 날짜 | 이슈·PR | AI가 틀린 것 | 잡은 장치 | 재발 방지로 바꾼 것 |
 |---|---|---|---|---|
+| 2026-11-16 | #29 · #34 | 종목 OG 이미지(`/stocks/[ticker]/opengraph-image`)를 추가하면서 목록에 없는 티커를 막는 proxy matcher(`/stocks/:ticker`)를 그대로 뒀다. 하위 경로는 matcher에 걸리지 않아 `/stocks/<아무거나>/opengraph-image-…`마다 이미지 핸들러의 404가 1년 캐시(`s-maxage=31536000`)로 쌓였다. spec에도 route group이 붙이는 해시를 빼고 이미지 주소를 적었다 | 리뷰(code-reviewer가 브랜치를 따로 빌드해 캐시 파일 생성까지 재현) | matcher를 `/stocks/:ticker/:path*`로 넓히고, 어떤 주소에 proxy가 걸리는지를 `unstable_doesMiddlewareMatch`로 테스트했다(이전 matcher로 되돌리면 실패). spec 이미지 주소·문구를 고쳤다 |
 | 2026-11-14 | #16 | 시세 폴링을 고정 1초 간격으로 둬서 웹과 앱이 한 순간에 서로 다른 초의 가격을 보였다(나란히 8번 중 1번만 일치). spec의 핵심 장면 "같은 시각 같은 가격"을 API 응답만 비교해 확인한 탓에 놓쳤다 | 화면 확인(웹·앱을 한 페이지에 나란히 띄워 현재가를 같은 순간에 비교) | 폴링을 초 경계 + 150ms 박자에 맞춤(`msUntilNextTick`). 박자 테스트와 변이(고정 간격으로 되돌리면 실패)로 확인, 나란히 8/8 일치 |
 | 2026-11-14 | #16 | 박자 계산에 `Date.now()`를 써서 Next.js Cache Components 빌드가 실패했다. #13에서 겪은 같은 규칙을 공용 패키지에서 다시 어김(단위 테스트는 Node라 통과) | 빌드(`next build` 미리 렌더링) | 마지막 응답 시각(`dataUpdatedAt`·`errorUpdatedAt`)으로 계산. 재발이라 `CLAUDE.md`에 규칙으로 적음 |
 | 2026-11-13 | #14 · #26 | 앱 목록 행을 `Link asChild` 안의 `Pressable`로 만들고 눌림 배경을 함수형 `style`로 줬는데, `Link`(Slot)가 병합하면서 함수형 style을 버려 눌림 피드백이 사라졌다(경고도 없음). 웹 미리보기 확인 스크립트는 탭 이동만 봐서 놓쳤다 | 리뷰(code-reviewer, 설치된 expo-router·Slot 코드 근거) | 눌림 상태를 `Pressable` children 함수로 받아 행 틀에 넘김. 확인 스크립트에 "누른 채 배경색이 바뀌는지" 추가 |

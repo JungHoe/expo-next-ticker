@@ -1,5 +1,9 @@
+// 번들 문서(proxy.md)는 unstable_doesProxyMatch를 안내하지만 설치된 16.4.5는 이전 이름만 내보낸다
+// (next/dist/experimental/testing/server/index.d.ts, #29에서 확인)
+import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 import { NextRequest } from "next/server";
 import { describe, expect, test } from "vitest";
+import nextConfig from "../next.config";
 import { config, proxy } from "./proxy";
 
 const request = (path: string) =>
@@ -20,6 +24,7 @@ describe("proxy: 목록에 없는 티커는 렌더 전에 404", () => {
     "/stocks/ZZZZ",
     "/stocks/aapl",
     "/stocks/%41APL",
+    "/stocks/ZZZZ/opengraph-image-13qrgn",
   ])("%s는 404 화면으로 rewrite하고 상태 404", (path) => {
     const res = proxy(request(path));
     expect(res.status).toBe(404);
@@ -28,7 +33,21 @@ describe("proxy: 목록에 없는 티커는 렌더 전에 404", () => {
     );
   });
 
-  test("상세 경로에만 걸린다", () => {
-    expect(config.matcher).toBe("/stocks/:ticker");
+  test("목록의 티커 아래 경로(OG 이미지)는 통과한다", () => {
+    const res = proxy(request("/stocks/AAPL/opengraph-image-13qrgn"));
+    expect(res.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  test.each([
+    ["/stocks/AAPL", true],
+    ["/stocks/AAPL?range=1d", true],
+    ["/stocks/ZZZZ/opengraph-image-13qrgn", true],
+    ["/", false],
+    ["/api/quotes", false],
+    ["/api/quotes/AAPL/history", false],
+  ])("%s에 proxy가 걸리는가: %s", (url, expected) => {
+    expect(unstable_doesMiddlewareMatch({ config, nextConfig, url })).toBe(
+      expected,
+    );
   });
 });
