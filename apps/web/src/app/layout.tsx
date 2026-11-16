@@ -1,9 +1,7 @@
 import { cssVariables } from "@ticker/tokens";
 import type { Metadata } from "next";
 import { Hanken_Grotesk, IBM_Plex_Mono, Newsreader } from "next/font/google";
-import Link from "next/link";
 import "./globals.css";
-import styles from "./layout.module.css";
 import { Providers } from "./providers";
 
 // 재료: Hallmark 테마 Almanac(docs/spec/design-tokens.md). 한글은 시스템 고딕이 대신 그린다
@@ -41,30 +39,32 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+/**
+ * 임베드 페이지는 앱이 주소로 넘긴 테마(?theme=light|dark)를 그리기 전에 적용한다(webview-bridge.md §3).
+ * 다른 페이지는 기기 설정을 따른다. 하이드레이션 뒤에 바꾸면 첫 화면이 기기 테마로 그려졌다가 바뀐다
+ * (Next.js 16 문서 02-guides/preventing-flash-before-hydration.md "Themes")
+ */
+const embedThemeScript = `(function(){try{if(location.pathname.indexOf("/embed/")!==0)return;var t=new URLSearchParams(location.search).get("theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}})()`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // 인라인 스크립트가 data-theme을 하이드레이션 전에 넣으므로 <html> 속성 차이는 경고하지 않는다
     <html
       lang="ko"
       className={`${display.variable} ${body.variable} ${num.variable}`}
+      suppressHydrationWarning
     >
-      {/* head에는 토큰 style만 둔다. title·meta는 metadata로(Next.js 문서: head 태그를 직접 쓰지 않는다) */}
+      {/* head에는 토큰 style과 테마 스크립트만 둔다. title·meta는 metadata로(Next.js 문서: head 태그를 직접 쓰지 않는다) */}
       <head>
         <style>{cssVariables()}</style>
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: 고정 문자열이다. 사용자 입력이 들어가지 않는다
+          dangerouslySetInnerHTML={{ __html: embedThemeScript }}
+        />
       </head>
+      {/* 상단 바는 페이지 종류마다 다르다: (market)·404는 SiteFrame, 임베드는 상세만 */}
       <body>
-        <div className={styles.shell}>
-          <header className={styles.bar}>
-            <Link href="/" className={styles.mark}>
-              Ticker
-            </Link>
-            <p className={styles.notice}>
-              시뮬레이션 시세입니다. 실제 시세가 아닙니다
-            </p>
-          </header>
-          <main className={styles.main}>
-            <Providers>{children}</Providers>
-          </main>
-        </div>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

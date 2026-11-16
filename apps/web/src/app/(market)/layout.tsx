@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { QuotesSnapshot } from "../quotes-snapshot";
+import { SiteFrame } from "../site-frame";
 import { MarketShell } from "./market-shell";
 import { Watchlist } from "./watchlist";
 
@@ -9,8 +10,10 @@ import { Watchlist } from "./watchlist";
  */
 export default function MarketLayout({ children }: { children: ReactNode }) {
   return (
-    <QuotesSnapshot>
-      <MarketShell watchlist={<Watchlist />}>{children}</MarketShell>
-    </QuotesSnapshot>
+    <SiteFrame>
+      <QuotesSnapshot>
+        <MarketShell watchlist={<Watchlist />}>{children}</MarketShell>
+      </QuotesSnapshot>
+    </SiteFrame>
   );
 }
