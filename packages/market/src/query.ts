@@ -10,6 +10,7 @@ import {
   type MarketApiConfig,
   MarketApiError,
 } from "./client";
+import { QUOTES_QUERY_KEY } from "./keys";
 import type { HistoryPoint, HistoryRange, Quote } from "./schema";
 import { HISTORY_SHAPE } from "./simulation";
 
@@ -32,7 +33,7 @@ export function msUntilNextTick(now: number): number {
  */
 export function quotesQueryOptions(config: MarketApiConfig) {
   return queryOptions({
-    queryKey: ["market", "quotes"] as const,
+    queryKey: QUOTES_QUERY_KEY,
     queryFn: ({ signal }) => fetchQuotes(config, signal),
     // 시계에 맞춘 박자. TanStack은 응답(성공·실패)이 올 때마다 이 함수로 다음 간격을 다시 잡으므로
     // 마지막 응답 시각이 곧 지금이다. Date.now()를 쓰지 않는다: 렌더 중에도 불려 Next.js Cache
