@@ -7,7 +7,7 @@
  * - 받는 쪽은 decode가 null이면 조용히 무시한다. 예외를 던지지 않는다
  * - DOM·React Native API를 쓰지 않는다. 웹과 앱이 이 파일을 그대로 쓴다
  */
-import { HistoryRangeSchema } from "@ticker/market";
+import { type HistoryRange, HistoryRangeSchema } from "@ticker/market";
 import type { ColorMode } from "@ticker/tokens";
 import { z } from "zod";
 
@@ -85,4 +85,22 @@ export const decodeToApp = decode(ToAppSchema);
  */
 export function messageEventScript(data: string): string {
   return `window.dispatchEvent(new MessageEvent("message", { data: ${JSON.stringify(data)} }));true;`;
+}
+
+/**
+ * 앱이 WebView에 여는 주소(webview-bridge.md §2, §3). 처음 테마와 기간을 주소로 넘긴다.
+ * RN의 URL·URLSearchParams 구현은 일부만 있어 문자열로 만든다
+ */
+export function embedUrl(
+  origin: string,
+  ticker: string,
+  range: HistoryRange,
+  theme: Theme,
+): string {
+  return `${origin}/embed/stocks/${encodeURIComponent(ticker)}?range=${range}&theme=${theme}`;
+}
+
+/** 주소에서 "scheme://host[:port]"만 꺼낸다. 출처를 정확히 비교할 때 쓴다(접두어 비교는 a.com.evil.com을 통과시킨다) */
+export function originOf(url: string): string {
+  return /^[a-z][a-z0-9+.-]*:\/\/[^/?#]*/i.exec(url)?.[0] ?? "";
 }

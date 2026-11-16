@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   decodeToApp,
   decodeToWeb,
+  embedUrl,
   encodeToApp,
   encodeToWeb,
   messageEventScript,
+  originOf,
 } from "./index";
 
 describe("메시지 규격(webview-bridge.md §3)", () => {
@@ -107,5 +109,30 @@ describe("injectJavaScript용 코드", () => {
 
   it("문서대로 true로 끝난다", () => {
     expect(messageEventScript("x").endsWith("true;")).toBe(true);
+  });
+});
+
+describe("임베드 주소", () => {
+  it("경로·기간·테마", () => {
+    expect(embedUrl("https://ticker.test", "AAPL", "1d", "dark")).toBe(
+      "https://ticker.test/embed/stocks/AAPL?range=1d&theme=dark",
+    );
+  });
+
+  it("티커는 경로 문자로 인코딩한다", () => {
+    expect(embedUrl("http://localhost:3000", "A/B?", "1h", "light")).toBe(
+      "http://localhost:3000/embed/stocks/A%2FB%3F?range=1h&theme=light",
+    );
+  });
+
+  it.each([
+    ["https://ticker.test/embed/stocks/AAPL?range=1h", "https://ticker.test"],
+    ["http://localhost:3000", "http://localhost:3000"],
+    ["https://ticker.test.evil.example/x", "https://ticker.test.evil.example"],
+    ["https://ticker.test#x", "https://ticker.test"],
+    ["about:blank", ""],
+    ["not a url", ""],
+  ])("%s의 출처는 %s", (url, origin) => {
+    expect(originOf(url)).toBe(origin);
   });
 });

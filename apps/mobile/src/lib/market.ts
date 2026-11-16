@@ -22,6 +22,12 @@ export const marketApi: MarketApiConfig = {
     fetch(url, { signal: init?.signal as AbortSignal | undefined }),
 };
 
+/**
+ * WebView 화면이 여는 웹 출처. 시세 API와 같은 서버다(webview-bridge.md §3).
+ * 그래서 EXPO_PUBLIC_API_BASE_URL은 경로 없는 출처(예: http://192.168.0.10:3000)여야 한다
+ */
+export const webOrigin = marketApi.baseUrl;
+
 export const queryClient = new QueryClient();
 
 let connected = false;

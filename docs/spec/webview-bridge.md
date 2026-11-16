@@ -16,7 +16,7 @@
 
 ## 3. 데이터
 ### 메시지 규격
-- 위치: `packages/bridge`(`@ticker/bridge`). Zod 스키마, `encode`·`decode`, `injectJavaScript`용 코드(`messageEventScript`)가 있다. DOM·React Native API를 쓰지 않는다
+- 위치: `packages/bridge`(`@ticker/bridge`). Zod 스키마, `encode`·`decode`, 임베드 주소(`embedUrl`), 출처 비교(`originOf`), `injectJavaScript`용 코드(`messageEventScript`)가 있다. 앱과 웹이 지켜야 할 약속을 한곳에 두고 단위 테스트한다. DOM·React Native API를 쓰지 않는다
 - 메시지는 JSON 문자열이다. 웹→앱 방향이 문자열만 받기 때문이다. 모든 메시지에 `ns: "ticker"`, `v: 1`이 붙는다
 
 | 방향 | `type` | 필드 | 언제 |
@@ -82,7 +82,7 @@
 - **임베드 주소를 경로로**(설계자 판단, design.md §7의 `?embed=1`은 예시였다): `/embed/stocks/{ticker}` 경로를 쓴다. 레이아웃은 `searchParams`를 읽을 수 없어 `?embed=1`로는 상단 바·목록을 숨길 수 없다. 또 페이지에서 `searchParams`를 읽으면 그 부분이 요청 시점 렌더가 된다. 경로로 나누면 임베드 페이지도 종목별로 미리 렌더링되고 ISR 스냅샷을 그대로 쓴다. 그래서 상단 바는 루트 레이아웃에서 `(market)` 레이아웃과 404 페이지로 옮긴다
 - **처음 테마를 주소로**(설계자 판단): 메시지는 하이드레이션 뒤에야 받을 수 있어, 메시지만 쓰면 첫 화면이 기기 테마로 그려졌다가 바뀐다. `injectedJavaScriptBeforeContentLoaded`는 react-native-webview 문서가 Android에서 "not 100% reliable"이라고 한다(Reference.md). 주소 + 인라인 스크립트는 네이티브·iframe 모두에서 같게 동작한다
 - **앱 → 웹은 `injectJavaScript`로 `message` 이벤트를 보냄**(설계자 판단): ref의 `postMessage`가 페이지의 어디(`window`/`document`)에 도착하는지 react-native-webview 문서에 없다. 문서가 런타임 주입 방법으로 안내하는 `injectJavaScript`로 `window`에 이벤트를 보내면, iframe의 `postMessage`와 같은 리스너 하나로 받을 수 있다
-- **웹 → 앱 출처 확인을 이동 제한으로**(설계자 판단): `onMessage` 이벤트에서 문서가 보장하는 필드는 `data`뿐이라 보낸 쪽 주소를 믿을 수 없다. 대신 WebView가 웹 출처 밖으로 가지 않게 막는다(`originWhitelist`, `onShouldStartLoadWithRequest`). Android는 첫 로드에서 `onShouldStartLoadWithRequest`를 부르지 않지만(Reference.md), 첫 주소는 앱이 만든 웹 출처 주소다
+- **웹 → 앱 출처 확인을 이동 제한으로**(설계자 판단): `onMessage` 이벤트에서 문서가 보장하는 필드는 `data`뿐이라 보낸 쪽 주소를 믿을 수 없다. 대신 WebView가 웹 출처 밖으로 가지 않게 막는다. `originWhitelist` 밖의 주소는 라이브러리가 OS에 넘긴다(기기 브라우저). 그런데 이 목록은 접두어 정규식으로 비교한다(`lib/WebViewShared.js` `originWhitelistToRegex`). 그래서 `https://expo-next-ticker.vercel.app.example.com`도 통과하므로 `onShouldStartLoadWithRequest`에서 출처가 정확히 같은지(`originOf`) 다시 본다(#32에서 확인). Android는 첫 로드에서 `onShouldStartLoadWithRequest`를 부르지 않지만(Reference.md), 첫 주소는 앱이 만든 웹 출처 주소다
 - **웹 미리보기는 iframe**(설계자 판단): 이 저장소는 앱 화면을 Expo 웹 미리보기로 확인한다(#4 결정). react-native-webview는 웹을 지원하지 않으므로 같은 props의 `.web.tsx` 구현을 둔다. 그러면 메시지 왕복을 브라우저에서 자동으로 확인할 수 있다. 네이티브 경로는 기기에서 확인한다
 - **`ready`를 기다림**(설계자 판단): WebView의 `onLoadEnd`는 HTML이 끝났다는 뜻이고 웹 앱이 메시지를 받을 준비가 됐다는 뜻은 아니다. 준비 신호를 웹이 직접 보내면 로딩 문구를 걷는 시점과 메시지 연결 확인이 하나가 된다. 15초는 Vercel 함수 콜드 스타트와 느린 모바일망을 감안한 값이다
 - **`range`를 받아 쓰는 곳**(설계자 판단): 웹의 상태를 앱이 알고 있다는 것을 헤더와 "다시 시도"로 보여 준다. 앱 상세의 기간까지 맞추면 두 화면이 서로의 상태를 바꾸게 되어 범위 밖으로 둔다
