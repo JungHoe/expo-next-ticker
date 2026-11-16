@@ -14,6 +14,7 @@ export {
   quoteLabel,
   secondsSince,
 } from "./format";
+export { QUOTES_QUERY_KEY } from "./keys";
 export type {
   ErrorResponse,
   HistoryPoint,

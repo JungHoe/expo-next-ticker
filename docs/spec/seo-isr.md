@@ -27,7 +27,7 @@
 ## 3. 데이터
 - 메타: `findTicker`의 고정 목록(종목명). 요청·시각에 따라 바뀌지 않는다
 - 시세 스냅샷: 전체 10종목 시세 응답(`quotesResponse`, `market-data.md` §3)을 서버에서 만든다. `'use cache'` 함수 안에서 그 시각으로 만들고, `cacheLife` 프로필 `snapshot`(stale 5분, revalidate 1분, expire 5분)으로 캐시한다
-- 브라우저 인계: 서버 렌더에서 `QueryClient`에 스냅샷을 넣고 `dehydrate` → `HydrationBoundary`. 쿼리 키·모양은 `quotesQueryOptions`와 같고, `dataUpdatedAt`은 스냅샷 시각이다. 그래서 브라우저는 이 값을 이미 오래된 값으로 보고 하이드레이션 직후 새로 받은 뒤 #16의 박자로 폴링을 이어 간다
+- 브라우저 인계: 캐시 함수 안에서 `QueryClient`에 스냅샷을 넣고 무효 표시(`invalidateQueries`, `refetchType: "none"`)를 한 뒤 `dehydrate`한다. 레이아웃은 그 결과를 `HydrationBoundary`로 넘긴다. 쿼리 키(`QUOTES_QUERY_KEY`)와 모양은 `quotesQueryOptions`와 같고, `dataUpdatedAt`은 스냅샷 시각이다. 브라우저는 무효 표시를 보고 시계와 비교하지 않은 채 이 값을 오래된 값으로 본다. 그래서 하이드레이션 직후 새로 받고, 그 뒤 #16의 박자로 폴링을 이어 간다
 - 스냅샷은 목록과 상세가 같이 쓰는 레이아웃(`(market)/layout.tsx`)에 한 번 둔다. 임베드 페이지(`webview-bridge.md`)도 같은 방식으로 넣는다
 
 ## 4. 동작 규칙
@@ -62,6 +62,7 @@
 - **ISR = `'use cache'` + `cacheLife`**(설계자 판단): Cache Components에서는 Pages Router의 `revalidate`가 `'use cache'`와 `cacheLife`로 바뀌었다(번들 문서 `02-guides/incremental-static-regeneration-cache-components.md` "getStaticProps with revalidate maps to 'use cache' with cacheLife"). 고정 10종목은 이미 `generateStaticParams`로 빌드 때 만든다. 여기에 주기적으로 다시 만드는 내용을 더한다. 그 내용이 시세 스냅샷이다
 - **스냅샷에 무엇을 넣나**(설계자 판단): 전체 목록 응답 하나다. 목록과 상세가 같은 쿼리 키를 쓰므로 한 번 넣으면 두 화면이 함께 찬다(`market-data.md` §3). 종목별로 따로 만들면 키가 달라져 폴링 쿼리와 합쳐지지 않는다
 - **캐시 함수 안의 `Date.now()`**(설계자 판단): `CLAUDE.md`는 웹 렌더 중 `Date.now()`를 막는다. 다만 `'use cache'` 범위 안에서 읽은 시각은 결과와 함께 캐시되어 다시 만들 때까지 모두가 같은 값을 본다. 문서도 이를 해법으로 든다(`01-getting-started/08-caching.md` "Random values and timestamps": "cache the result so all users see the same value until revalidation"). 렌더 함수에서 직접 읽지 않고 캐시 함수 안에서만 읽는다
+- **무효 표시로 넘김**(설계자 판단, #30 빌드에서 확인): 데이터가 있는 `useQuery`는 렌더 중에 신선도를 `Date.now()`로 판정한다(`@tanstack/query-core` `query.js` `isStaleByTime`). 그래서 서버 렌더가 미리 렌더링에서 "unstable value `Date.now()` in a Client Component"로 멈춘다. 무효 표시가 있으면 TanStack은 시계를 보지 않고 바로 오래된 값으로 본다. 스냅샷은 원래 받자마자 새로 받아야 하는 값이므로 의미도 맞다. `dehydrate()`도 `dehydratedAt`에 `Date.now()`를 넣으므로 `'use cache'` 함수 안에서 부른다
 - **수명 stale 5분 / revalidate 1분 / expire 5분**(설계자 판단): 시세에 맞을 것 같은 `seconds` 프로필은 expire가 1분이라 미리 렌더링에서 빠지고 요청마다 서버가 그린다. 이것은 ISR이 아니다(`cacheLife.md` "Prerendering behavior": expire 5분 미만은 dynamic hole). revalidate 1분이면 방문이 있는 동안 1분마다 다시 만들고, expire 5분이면 5분 넘게 방문이 없을 때 다음 요청이 새로 만든다. 그래서 첫 화면 값은 최대 약 5분 전 것이다. stale을 5분으로 둔 것은 5분 미만이면 App Shell에서 빠지기 때문이다
 - **오래될 수 있는 값을 보여 주는 이유**(설계자 판단): 뼈대보다 정보가 있고, 1초 안에 지금 값으로 바뀐다. JS 없는 환경과 미리보기 봇도 값을 본다. 값이 끊기면 "N초 전 시세"가 스냅샷 시각을 기준으로 정직하게 나온다
 - **Vercel 한도**(설계자 판단): 다시 만들기는 방문이 있을 때만 일어난다. 경로 11개(`/`와 10종목)가 1분에 한 번씩 다시 만들어져도 함수 호출은 시세 폴링(화면 하나가 하루 8만 6천 회, `market-data.md` §7)보다 훨씬 적다
