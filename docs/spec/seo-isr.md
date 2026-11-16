@@ -10,7 +10,7 @@
 | 플랫폼 | 화면 | 구성 |
 |---|---|---|
 | 웹 | `/stocks/{ticker}`의 `<head>` | 제목 "AAPL Apple 시세 · Ticker", 설명, canonical, Open Graph(제목·설명·주소·이미지·사이트 이름·언어), 트위터 카드, `robots: noindex, nofollow` |
-| 웹 | `/stocks/{ticker}/opengraph-image` | 1200×630 PNG. 종이색 바탕에 티커(가장 크게)·종목명·"Simulated quotes · Ticker". 위에 잉크색 굵은 선(상단 바와 같은 재료). 가격·차트는 넣지 않는다 |
+| 웹 | OG 이미지(`og:image` 주소: `/stocks/{ticker}/opengraph-image-<해시>`. route group 안이라 Next.js가 해시를 붙인다) | 1200×630 PNG. 종이색 바탕에 티커(가장 크게)와 종목명, 아래 줄에 "Simulated quotes, not real prices"와 "Ticker". 위에 잉크색 굵은 선(상단 바와 같은 재료). 가격·차트는 넣지 않는다 |
 | 웹 | `/`, `/stocks/{ticker}`의 첫 HTML | 관심 종목 표, 상세 머리(현재가·등락), 수치 칸(기준가·고가·저가)이 시세 스냅샷 값으로 차 있다. 차트는 지금처럼 뼈대(이력은 기간을 주소에서 읽으므로 브라우저에서 받는다) |
 | 앱 | 해당 없음 | |
 
@@ -43,7 +43,8 @@
 ## 5. 수용 기준
 - [ ] `/stocks/AAPL` 첫 HTML에 §2 메타 값이 모두 있다: `<title>`, description, canonical, `og:title`·`og:description`·`og:url`·`og:image`(1200×630)·`og:site_name`·`og:locale`, `twitter:card`, `robots noindex`
 - [ ] 10종목의 title·description·canonical·og:url·og:image가 종목마다 다르다
-- [ ] `/stocks/AAPL/opengraph-image`가 1200×630 PNG를 돌려주고, 빌드 때 10종목 모두 미리 만들어진다
+- [ ] `og:image` 주소가 1200×630 PNG를 돌려주고, 빌드 때 10종목 모두 미리 만들어진다
+- [ ] 목록에 없는 티커의 하위 경로(`/stocks/ZZZZ/opengraph-image-…`)도 proxy가 렌더 전에 404로 돌려보낸다(지어낸 주소마다 캐시가 쌓이지 않게)
 - [ ] 배포본(Vercel)에서 canonical·`og:url`·`og:image`가 `https://expo-next-ticker.vercel.app/…` 절대 주소다
 - [ ] `/`와 `/stocks/AAPL` 첫 HTML에 AAPL 현재가 숫자가 들어 있다(시세 뼈대가 없다). 브라우저에서 1초 안에 지금 값으로 바뀌고, 그 뒤 웹·앱 같은 박자(#16)가 유지된다
 - [ ] `next build` 경로 표에서 `/stocks/[ticker]` 10개가 미리 렌더링되고 revalidate 1분, expire 5분이다
