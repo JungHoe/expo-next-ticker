@@ -65,8 +65,8 @@
 - [ ] 웹 `/stocks/AAPL`이 Hallmark `sloplint --scope app` FAIL 0이다
 
 ## 6. 범위 밖
-- ISR, SEO 메타, `robots: noindex`(4일차 spec에서 다룬다)
-- WebView 임베드 모드 `?embed=1`(4일차 spec)
+- ISR, SEO 메타, `robots: noindex`(`seo-isr.md`)
+- WebView 임베드 페이지 `/embed/stocks/{ticker}`(`webview-bridge.md`)
 - 차트 확대·이동, 십자선, 툴팁
 - 거래량, 호가, 뉴스, 기업 정보
 
