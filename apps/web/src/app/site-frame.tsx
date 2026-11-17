@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import styles from "./site-frame.module.css";
+import { ThemeReset } from "./theme-reset";
 
 /**
  * 사이트 상단 바(서비스 이름 + 시뮬레이션 고지)와 본문 틀. 임베드 페이지는 이 틀 없이 상세만 그리므로
@@ -9,6 +10,7 @@ import styles from "./site-frame.module.css";
 export function SiteFrame({ children }: { children: ReactNode }) {
   return (
     <div className={styles.shell}>
+      <ThemeReset />
       <header className={styles.bar}>
         <Link href="/" className={styles.mark}>
           Ticker

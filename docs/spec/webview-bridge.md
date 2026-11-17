@@ -16,7 +16,7 @@
 
 ## 3. 데이터
 ### 메시지 규격
-- 위치: `packages/bridge`(`@ticker/bridge`). Zod 스키마와 `encode`·`decode`만 있다. DOM·React Native API를 쓰지 않는다
+- 위치: `packages/bridge`(`@ticker/bridge`). Zod 스키마, `encode`·`decode`, `injectJavaScript`용 코드(`messageEventScript`)가 있다. DOM·React Native API를 쓰지 않는다
 - 메시지는 JSON 문자열이다. 웹→앱 방향이 문자열만 받기 때문이다. 모든 메시지에 `ns: "ticker"`, `v: 1`이 붙는다
 
 | 방향 | `type` | 필드 | 언제 |
@@ -54,6 +54,7 @@
 
 - 앱이 받는 메시지는 웹 출처의 페이지에서만 온다. 네이티브에서는 WebView가 웹 출처 밖으로 가지 않게 막아서 보장하고, iframe에서는 `origin`·`source`로 확인한다
 - 웹이 받는 `theme` 메시지는 출처를 따지지 않는다. 바꿀 수 있는 것이 색뿐이고 값은 스키마로 거른다
+- 임베드 밖 페이지는 마운트될 때 `data-theme`을 지운다. 임베드에서 링크로 넘어가도 앱이 정한 테마가 남지 않게 하기 위해서다(#36 리뷰)
 
 ## 5. 수용 기준
 앱 WebView 화면은 Expo 웹 미리보기(iframe)로 메시지 왕복까지 확인한다. **(기기)** 표시 기준은 네이티브 WebView 경로라 #4와 함께 몰아서 확인한다.

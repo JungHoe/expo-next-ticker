@@ -79,8 +79,9 @@ export const decodeToApp = decode(ToAppSchema);
 
 /**
  * WebView의 injectJavaScript에 넘길 코드. 페이지 window에 message 이벤트를 보낸다. iframe의 postMessage와 같은
- * 리스너 하나로 받게 하려는 것이다(spec §7). JSON.stringify로 문자열 리터럴을 만들어 따옴표·줄바꿈·`</script>`가
- * 코드를 깨지 않는다. react-native-webview 문서대로 끝에 true를 둔다
+ * 리스너 하나로 받게 하려는 것이다(spec §7). JSON.stringify로 문자열 리터럴을 만들어 따옴표·줄바꿈이 코드를 깨지
+ * 않는다. injectJavaScript는 HTML이 아니라 JS로 실행하므로 `</script>`도 그대로 문자열이다(HTML 안에 넣는 용도가
+ * 아니다). react-native-webview 문서대로 끝에 true를 둔다
  */
 export function messageEventScript(data: string): string {
   return `window.dispatchEvent(new MessageEvent("message", { data: ${JSON.stringify(data)} }));true;`;
