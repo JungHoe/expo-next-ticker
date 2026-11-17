@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "5.107.1",
+    "@ticker/bridge": "workspace:*",
     "@ticker/chart": "workspace:*",
     "@ticker/market": "workspace:*",
     "@ticker/tokens": "workspace:*",

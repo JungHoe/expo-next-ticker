@@ -28,6 +28,35 @@ describe("cssVariables (웹)", () => {
     expect(split(css).dark).toContain(`--color-${name}: ${colors.dark[name]};`);
   });
 
+  /** 선택자 하나의 { } 안을 꺼낸다 */
+  function block(selector: string) {
+    const start = css.indexOf(`${selector} {`);
+    if (start < 0) return "";
+    return css.slice(start, css.indexOf("}", start));
+  }
+
+  test('기기 설정 다크는 data-theme="light"가 아닐 때만 적용된다(앱이 정한 테마 우선)', () => {
+    expect(split(css).dark).toContain(':root:not([data-theme="light"]) {');
+    expect(split(css).dark).not.toMatch(
+      /@media \(prefers-color-scheme: dark\) \{\s*:root \{/,
+    );
+  });
+
+  test.each(
+    tokenNames,
+  )('data-theme="dark"이면 기기 설정과 관계없이 다크 %s', (name) => {
+    expect(block(':root[data-theme="dark"]')).toContain(
+      `--color-${name}: ${colors.dark[name]};`,
+    );
+  });
+
+  test("data-theme이 브라우저 기본 UI 색(color-scheme)도 정한다", () => {
+    expect(block(':root[data-theme="dark"]')).toContain("color-scheme: dark;");
+    expect(block(':root[data-theme="light"]')).toContain(
+      "color-scheme: light;",
+    );
+  });
+
   test("간격·글자 크기·선·모서리는 px 단위 변수다", () => {
     for (const [name, value] of Object.entries(space)) {
       expect(css).toContain(`--space-${name}: ${value}px;`);

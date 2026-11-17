@@ -1,6 +1,6 @@
 /**
  * 같은 토큰 원본에서 플랫폼별 형태를 만든다.
- * - 웹: CSS 변수(`:root`, 다크는 prefers-color-scheme). 원본 oklch 값을 그대로 쓴다
+ * - 웹: CSS 변수(`:root`, 다크는 prefers-color-scheme 또는 `<html data-theme="dark">`). 원본 oklch 값을 그대로 쓴다
  * - 앱: React Native 스타일에 바로 넣는 #rrggbb. 모듈을 불러올 때 한 번만 변환한다
  */
 import { oklchToHex } from "./color";
@@ -47,17 +47,25 @@ export function cssVariables(): string {
     ...px("rule", rule),
     ...px("radius", radius),
   ]);
+  const dark = declarations(colorEntries("dark"));
   return [
     ":root {",
     "  color-scheme: light dark;",
     light,
     "}",
+    // <html data-theme>이 있으면 기기 설정보다 그 값을 따른다. 앱이 WebView에 테마를 정해 주기 때문이다
+    // (docs/spec/webview-bridge.md §3). 없으면 기기 설정(prefers-color-scheme)을 따른다
     "@media (prefers-color-scheme: dark) {",
-    "  :root {",
-    declarations(colorEntries("dark"))
-      .replaceAll("\n", "\n  ")
-      .replace(/^/, "  "),
+    '  :root:not([data-theme="light"]) {',
+    dark.replaceAll("\n", "\n  ").replace(/^/, "  "),
     "  }",
+    "}",
+    ':root[data-theme="dark"] {',
+    "  color-scheme: dark;",
+    dark,
+    "}",
+    ':root[data-theme="light"] {',
+    "  color-scheme: light;",
     "}",
   ].join("\n");
 }
