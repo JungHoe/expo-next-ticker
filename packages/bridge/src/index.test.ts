@@ -5,6 +5,7 @@ import {
   embedUrl,
   encodeToApp,
   encodeToWeb,
+  isSameOrigin,
   messageEventScript,
   originOf,
 } from "./index";
@@ -140,7 +141,24 @@ describe("임베드 주소", () => {
     ["https://ticker.test:4430", "https://ticker.test:4430"],
     // 사용자 정보가 붙은 주소는 웹 출처와 같다고 보지 않는다
     ["https://ticker.test@evil.example/", "https://ticker.test@evil.example"],
+    ["http://[::1]:80/x", "http://[::1]"],
+    ["http://[::1]:3000", "http://[::1]:3000"],
+    // 불투명 출처(data:·sandbox iframe)를 브라우저는 "null"로 보고한다
+    ["null", ""],
   ])("%s의 출처는 %s", (url, origin) => {
     expect(originOf(url)).toBe(origin);
+  });
+
+  it.each([
+    ["https://ticker.test/embed/stocks/AAPL", "https://ticker.test", true],
+    ["HTTPS://Ticker.test:443/x", "https://ticker.test", true],
+    ["https://ticker.test.evil.example/", "https://ticker.test", false],
+    ["http://ticker.test/", "https://ticker.test", false],
+    // 웹 출처가 비면(예: 환경 변수에 scheme을 빠뜨림) 무엇도 같다고 보지 않는다(#37 리뷰)
+    ["data:text/html,x", "", false],
+    ["null", "", false],
+    ["", "", false],
+  ])("isSameOrigin(%s, %s) = %s", (url, origin, expected) => {
+    expect(isSameOrigin(url, origin)).toBe(expected);
   });
 });

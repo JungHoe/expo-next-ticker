@@ -1,3 +1,4 @@
+import { isSameOrigin } from "@ticker/bridge";
 import { useEffect, useImperativeHandle, useRef } from "react";
 import type { EmbeddedPageProps } from "./embedded-page.types";
 
@@ -24,7 +25,7 @@ export function EmbeddedPage({
 
   useEffect(() => {
     const listener = (event: MessageEvent) => {
-      if (event.origin !== origin) return;
+      if (!isSameOrigin(event.origin, origin)) return;
       if (event.source !== frame.current?.contentWindow) return;
       if (typeof event.data === "string") onMessage(event.data);
     };

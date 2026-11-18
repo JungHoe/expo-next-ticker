@@ -65,11 +65,12 @@ export default function WebPageScreen() {
   }, [scheme, readyCount]);
 
   // 로딩 문구가 사라지면 화면 낭독기 사용자에게 페이지가 열렸다고 알린다(포커스가 있던 문구가 없어진다)
+  // 15초 시점에 ready와 시간 초과가 겹치면 오류 화면 위로 알리지 않는다
   useEffect(() => {
-    if (readyCount === 1) {
+    if (readyCount === 1 && !failed) {
       AccessibilityInfo.announceForAccessibility("웹 페이지를 열었습니다");
     }
-  }, [readyCount]);
+  }, [readyCount, failed]);
 
   const symbol = listed?.symbol;
   const onMessage = useCallback(

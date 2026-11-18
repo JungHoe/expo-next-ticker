@@ -120,3 +120,11 @@ export function originOf(url: string): string {
   }
   return `${scheme}://${host}`;
 }
+
+/**
+ * url이 웹 출처(originOf로 만든 값)의 주소인가. 웹 출처가 비어 있으면 늘 false다: 환경 변수에 scheme을 빠뜨려
+ * originOf가 ""를 돌려줘도, "null"(불투명 출처)·data: 주소가 ""와 같다고 통과하지 않게 한다(#37 리뷰)
+ */
+export function isSameOrigin(url: string, origin: string): boolean {
+  return origin !== "" && originOf(url) === origin;
+}

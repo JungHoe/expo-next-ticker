@@ -1,4 +1,4 @@
-import { messageEventScript, originOf } from "@ticker/bridge";
+import { isSameOrigin, messageEventScript } from "@ticker/bridge";
 import { useImperativeHandle, useRef } from "react";
 import { Linking } from "react-native";
 import WebView, { type WebViewMessageEvent } from "react-native-webview";
@@ -13,7 +13,8 @@ import type { EmbeddedPageProps } from "./embedded-page.types";
  * - 출처: 웹 출처 밖으로의 이동은 막고 기기 브라우저로 연다. 메시지는 보낸 프레임의 주소(nativeEvent.url)가
  *   웹 출처일 때만 받는다. 이동을 막아도 다른 출처의 iframe은 메시지를 보낼 수 있기 때문이다(#32 리뷰).
  *   react-native-webview 14.0.1 소스: Android는 보낸 프레임의 출처(RNCWebView.java onPostMessage의 sourceOrigin),
- *   iOS는 보낸 프레임의 주소(RNCWebViewImpl.m message.frameInfo.request.URL)를 url에 넣는다
+ *   iOS는 보낸 프레임의 주소(RNCWebViewImpl.m message.frameInfo.request.URL)를 url에 넣는다.
+ *   단 WEB_MESSAGE_LISTENER가 없는 구형 Android WebView는 최상위 문서 주소(getUrl())를 넣어 iframe을 구분하지 못한다
  */
 export function EmbeddedPage({
   uri,
@@ -44,12 +45,12 @@ export function EmbeddedPage({
       // (…vercel.app.example.com도 통과) 아래에서 출처가 정확히 같은지 다시 본다
       originWhitelist={[origin]}
       onShouldStartLoadWithRequest={({ url }: ShouldStartLoadRequest) => {
-        if (url === "about:blank" || originOf(url) === origin) return true;
+        if (url === "about:blank" || isSameOrigin(url, origin)) return true;
         Linking.openURL(url).catch(() => {});
         return false;
       }}
       onMessage={({ nativeEvent }: WebViewMessageEvent) => {
-        if (originOf(nativeEvent.url) === origin) onMessage(nativeEvent.data);
+        if (isSameOrigin(nativeEvent.url, origin)) onMessage(nativeEvent.data);
       }}
       onError={onLoadError}
       onHttpError={onLoadError}
