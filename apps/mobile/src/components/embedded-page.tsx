@@ -9,8 +9,11 @@ import type { EmbeddedPageProps } from "./embedded-page.types";
 /**
  * 네이티브 WebView(webview-bridge.md §3 전달 경로).
  * - 앱 → 웹: injectJavaScript로 페이지 window에 message 이벤트(ref의 postMessage는 도착 위치가 문서에 없다)
- * - 웹 → 앱: window.ReactNativeWebView.postMessage → onMessage의 nativeEvent.data(문서가 보장하는 필드는 data뿐)
- * - 출처: 웹 출처 밖으로의 이동은 막고 기기 브라우저로 연다. 그래서 받는 메시지는 웹 출처의 페이지에서만 온다
+ * - 웹 → 앱: window.ReactNativeWebView.postMessage → onMessage의 nativeEvent.data
+ * - 출처: 웹 출처 밖으로의 이동은 막고 기기 브라우저로 연다. 메시지는 보낸 프레임의 주소(nativeEvent.url)가
+ *   웹 출처일 때만 받는다. 이동을 막아도 다른 출처의 iframe은 메시지를 보낼 수 있기 때문이다(#32 리뷰).
+ *   react-native-webview 14.0.1 소스: Android는 보낸 프레임의 출처(RNCWebView.java onPostMessage의 sourceOrigin),
+ *   iOS는 보낸 프레임의 주소(RNCWebViewImpl.m message.frameInfo.request.URL)를 url에 넣는다
  */
 export function EmbeddedPage({
   uri,
@@ -45,13 +48,14 @@ export function EmbeddedPage({
         Linking.openURL(url).catch(() => {});
         return false;
       }}
-      onMessage={(event: WebViewMessageEvent) =>
-        onMessage(event.nativeEvent.data)
-      }
+      onMessage={({ nativeEvent }: WebViewMessageEvent) => {
+        if (originOf(nativeEvent.url) === origin) onMessage(nativeEvent.data);
+      }}
       onError={onLoadError}
       onHttpError={onLoadError}
       // 웹 콘텐츠 프로세스가 끝나면(iOS)·렌더 프로세스가 죽으면(Android) 빈 화면 대신 오류로 알린다.
-      // Android는 이 처리가 없으면 앱이 같이 종료된다(react-native-webview Reference.md)
+      // 죽은 WebView는 다시 그릴 수 없어 오류 화면으로 바꿔 내리고 "다시 시도"로 새로 띄운다.
+      // (앱 종료는 라이브러리가 막는다: 14.0.1 RNCWebViewClient.onRenderProcessGone이 API 26 이상에서 늘 true)
       onContentProcessDidTerminate={onLoadError}
       onRenderProcessGone={onLoadError}
       // 불러오는 동안 흰 바탕이 번쩍이지 않게 앱 종이색을 깐다

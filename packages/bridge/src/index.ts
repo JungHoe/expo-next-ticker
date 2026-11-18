@@ -100,7 +100,23 @@ export function embedUrl(
   return `${origin}/embed/stocks/${encodeURIComponent(ticker)}?range=${range}&theme=${theme}`;
 }
 
-/** 주소에서 "scheme://host[:port]"만 꺼낸다. 출처를 정확히 비교할 때 쓴다(접두어 비교는 a.com.evil.com을 통과시킨다) */
+const DEFAULT_PORT: Record<string, string> = { http: "80", https: "443" };
+
+/**
+ * 주소에서 "scheme://host[:port]"만 꺼낸다. 출처를 정확히 비교할 때 쓴다(접두어 비교는 a.com.evil.com을 통과시킨다).
+ * 브라우저·WebView가 보고하는 출처와 같은 모양으로 scheme·host를 소문자로, 기본 포트를 뗀다. 환경 변수에
+ * "http://MyPC.local:3000"을 줘도 비교가 어긋나지 않게 하려는 것이다(#32 리뷰). 사용자 정보("a@b")는 떼지 않는다:
+ * 그런 주소는 웹 출처와 같다고 보지 않는다
+ */
 export function originOf(url: string): string {
-  return /^[a-z][a-z0-9+.-]*:\/\/[^/?#]*/i.exec(url)?.[0] ?? "";
+  const match = /^([a-z][a-z0-9+.-]*):\/\/([^/?#]*)/i.exec(url);
+  if (!match) return "";
+  const [, rawScheme = "", rawHost = ""] = match;
+  const scheme = rawScheme.toLowerCase();
+  let host = rawHost.toLowerCase();
+  const port = DEFAULT_PORT[scheme];
+  if (port && host.endsWith(`:${port}`)) {
+    host = host.slice(0, -(port.length + 1));
+  }
+  return `${scheme}://${host}`;
 }

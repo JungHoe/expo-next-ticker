@@ -132,6 +132,14 @@ describe("임베드 주소", () => {
     ["https://ticker.test#x", "https://ticker.test"],
     ["about:blank", ""],
     ["not a url", ""],
+    // 브라우저·WebView가 보고하는 출처와 같은 모양으로 맞춘다(#32 리뷰)
+    ["HTTP://MyPC.Local:3000/embed", "http://mypc.local:3000"],
+    ["https://ticker.test:443/x", "https://ticker.test"],
+    ["http://ticker.test:80", "http://ticker.test"],
+    ["http://ticker.test:443", "http://ticker.test:443"],
+    ["https://ticker.test:4430", "https://ticker.test:4430"],
+    // 사용자 정보가 붙은 주소는 웹 출처와 같다고 보지 않는다
+    ["https://ticker.test@evil.example/", "https://ticker.test@evil.example"],
   ])("%s의 출처는 %s", (url, origin) => {
     expect(originOf(url)).toBe(origin);
   });
