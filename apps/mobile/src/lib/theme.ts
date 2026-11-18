@@ -4,7 +4,14 @@ import { IBMPlexMono_400Regular } from "@expo-google-fonts/ibm-plex-mono/400Regu
 import { IBMPlexMono_500Medium } from "@expo-google-fonts/ibm-plex-mono/500Medium";
 import { Newsreader_400Regular } from "@expo-google-fonts/newsreader/400Regular";
 import { Newsreader_500Medium } from "@expo-google-fonts/newsreader/500Medium";
-import { hexColors, radius, rule, space, text } from "@ticker/tokens";
+import {
+  type ColorMode,
+  hexColors,
+  radius,
+  rule,
+  space,
+  text,
+} from "@ticker/tokens";
 import { useColorScheme } from "react-native";
 
 /**
@@ -32,7 +39,8 @@ export const fonts = {
 
 /** 기기 설정(라이트·다크)에 맞는 토큰. 색은 @ticker/tokens가 미리 #rrggbb로 바꿔 둔 값이다 */
 export function useTheme() {
-  const scheme = useColorScheme() === "dark" ? "dark" : "light";
+  // 반환 객체에 넣으면 리터럴이 string으로 넓어진다. WebView 메시지(theme)에 그대로 쓰도록 모드 타입을 붙인다
+  const scheme: ColorMode = useColorScheme() === "dark" ? "dark" : "light";
   return {
     scheme,
     colors: hexColors[scheme],

@@ -16,12 +16,12 @@
 
 ## 3. 데이터
 ### 메시지 규격
-- 위치: `packages/bridge`(`@ticker/bridge`). Zod 스키마, `encode`·`decode`, `injectJavaScript`용 코드(`messageEventScript`)가 있다. DOM·React Native API를 쓰지 않는다
+- 위치: `packages/bridge`(`@ticker/bridge`). Zod 스키마, `encode`·`decode`, 임베드 주소(`embedUrl`), 출처 비교(`originOf`·`isSameOrigin`), `injectJavaScript`용 코드(`messageEventScript`)가 있다. 앱과 웹이 지켜야 할 약속을 한곳에 두고 단위 테스트한다. DOM·React Native API를 쓰지 않는다
 - 메시지는 JSON 문자열이다. 웹→앱 방향이 문자열만 받기 때문이다. 모든 메시지에 `ns: "ticker"`, `v: 1`이 붙는다
 
 | 방향 | `type` | 필드 | 언제 |
 |---|---|---|---|
-| 앱 → 웹 | `theme` | `theme: "light" \| "dark"` | 앱 테마가 바뀔 때 |
+| 앱 → 웹 | `theme` | `theme: "light" \| "dark"` | `ready`를 받을 때마다, 앱 테마가 바뀔 때 |
 | 웹 → 앱 | `ready` | `ticker`, `theme`(웹이 적용한 테마), `range` | 임베드 페이지가 하이드레이션된 뒤 한 번 |
 | 웹 → 앱 | `range` | `range: "1h" \| "1d" \| "1w" \| "1m"` | 웹에서 기간을 바꿨을 때 |
 
@@ -36,23 +36,23 @@
 | | 네이티브(WebView) | 웹 미리보기(iframe) |
 |---|---|---|
 | 앱 → 웹 | `injectJavaScript`로 페이지 `window`에 `message` 이벤트를 보낸다 | `iframe.contentWindow.postMessage(문자열, 웹 출처)` |
-| 웹 → 앱 | `window.ReactNativeWebView.postMessage(문자열)` → `onMessage`의 `nativeEvent.data` | `window.parent.postMessage(문자열, "*")` → 앱이 `event.origin`이 웹 출처이고 `event.source`가 그 iframe인지 확인한다 |
+| 웹 → 앱 | `window.ReactNativeWebView.postMessage(문자열)` → `onMessage`의 `nativeEvent.data`. 앱이 `nativeEvent.url`(보낸 프레임)의 출처가 웹 출처인지 확인한다 | `window.parent.postMessage(문자열, "*")` → 앱이 `event.origin`이 웹 출처이고 `event.source`가 그 iframe인지 확인한다 |
 
 - 웹은 받을 때 두 경로 모두 `window`의 `message` 이벤트 하나로 듣는다. 보낼 때는 `ReactNativeWebView` → 부모 창 순서로 찾는다. 둘 다 없으면(브라우저에서 바로 연 경우) 보내지 않는다
-- 웹 출처: 앱의 `EXPO_PUBLIC_API_BASE_URL` 또는 운영 주소다. 시세 API와 같은 출처를 쓴다(`apps/mobile/src/lib/market.ts`)
+- 웹 출처: 앱의 `EXPO_PUBLIC_API_BASE_URL` 또는 운영 주소다. 시세 API와 같은 출처를 쓴다(`apps/mobile/src/lib/market.ts`). 출처 비교는 `originOf`로 한다. scheme·host를 소문자로, 기본 포트(80·443)를 떼어 WebView·브라우저가 보고하는 모양과 맞춘다. 웹 출처가 비면(scheme 누락 등) `isSameOrigin`은 어떤 주소도 같다고 보지 않는다
 
 ## 4. 동작 규칙
 | 상태 | 웹(임베드) | 앱(WebView 화면) |
 |---|---|---|
-| 로딩 | 상세와 같다(ISR 스냅샷, `seo-isr.md`) | `ready`를 받을 때까지 WebView 위에 "웹 페이지를 불러오는 중"(앱 색·글꼴). 받으면 걷는다 |
+| 로딩 | 상세와 같다(ISR 스냅샷, `seo-isr.md`) | `ready`를 받을 때까지 WebView 위에 "웹 페이지를 불러오는 중"(앱 색·글꼴). 그동안 WebView는 화면 낭독기에서 숨긴다. 받으면 걷고 "웹 페이지를 열었습니다"를 알린다 |
 | 오류 | 상세와 같다(시세 오류 규칙) | 불러오기 실패(`onError`), HTTP 오류(`onHttpError`), 15초 안에 `ready`가 오지 않는 경우: "웹 페이지를 열지 못했습니다"와 "다시 시도". 다시 시도는 앱이 아는 마지막 기간으로 주소를 다시 만들어 연다 |
-| 테마 | 처음에는 `?theme=`를 쓰고, 그 뒤에는 `theme` 메시지로 새로고침 없이 색만 바꾼다 | 기기 테마가 바뀌면 `theme` 메시지를 보낸다 |
+| 테마 | 처음에는 `?theme=`를 쓰고, 그 뒤에는 `theme` 메시지로 새로고침 없이 색만 바꾼다 | `ready`를 받을 때마다, 그리고 기기 테마가 바뀌면 `theme` 메시지를 보낸다. 기간 링크는 `?theme=`를 넘기지 않아 웹이 스스로 새로 고쳐지면 기기 테마로 그려지는데, 그때 다시 오는 `ready`로 맞춘다(#36 리뷰) |
 | 기간 | 기간 버튼은 그대로(`?range=`)이고, 바꾸면 `range` 메시지를 보낸다 | 처음에는 앱 상세에서 고른 기간으로 연다(`?range=`). 받은 기간을 화면 파라미터에 둔다(`router.setParams`). 헤더 제목에 반영한다("AAPL 웹 페이지 · 1일"). WebView는 다시 불러오지 않는다 |
 | 이동 | 임베드 페이지는 다른 주소로 가는 링크를 두지 않는다 | 웹 출처 밖으로 가는 이동은 WebView 안에서 막고 기기 브라우저로 연다 |
 | 없는 티커 | 404 | 앱 종목 상세와 같이 "목록에 없는 종목입니다"(WebView를 열지 않는다) |
 | 장 마감 시간 | 해당 없음(24시간 시뮬레이션) | 해당 없음 |
 
-- 앱이 받는 메시지는 웹 출처의 페이지에서만 온다. 네이티브에서는 WebView가 웹 출처 밖으로 가지 않게 막아서 보장하고, iframe에서는 `origin`·`source`로 확인한다
+- 앱은 웹 출처의 페이지가 보낸 메시지만 받는다. 네이티브에서는 WebView가 웹 출처 밖으로 가지 않게 막고, 보낸 프레임의 주소(`nativeEvent.url`)도 확인한다. iframe에서는 `origin`·`source`로 확인한다
 - 웹이 받는 `theme` 메시지는 출처를 따지지 않는다. 바꿀 수 있는 것이 색뿐이고 값은 스키마로 거른다
 - 임베드 밖 페이지는 마운트될 때 `data-theme`을 지운다. 임베드에서 링크로 넘어가도 앱이 정한 테마가 남지 않게 하기 위해서다(#36 리뷰)
 
@@ -68,7 +68,12 @@
 - [ ] 앱(웹 미리보기): 웹 안에서 기간을 1일로 바꾸면 앱 헤더가 "AAPL 웹 페이지 · 1일"이 된다(웹→앱)
 - [ ] 앱(웹 미리보기): 앱 테마가 바뀌면 iframe 안 웹이 같은 테마로 바뀐다(앱→웹)
 - [ ] 앱: 웹 서버가 없으면 15초 안에 오류 안내와 "다시 시도"가 나온다
-- [ ] **(기기)** 안드로이드 Expo Go에서 같은 왕복(테마·기간·ready)이 동작하고, 웹 출처 밖 링크는 기기 브라우저로 열린다
+- [ ] 앱(웹 미리보기): iframe이 `?theme=` 없이 새로 고쳐져도 다시 온 `ready`에 앱이 테마를 보내 앱 테마로 돌아온다
+- [ ] 앱(웹 미리보기): 로딩 중에는 iframe을 감싼 요소가 `aria-hidden`이고 `ready` 뒤에 풀린다
+- [ ] 앱: `EXPO_PUBLIC_API_BASE_URL`에 대문자 호스트(`http://LOCALHOST:3000`)를 줘도 `ready`가 도착한다
+- [ ] `@ticker/bridge`: `originOf`(대소문자·기본 포트·IPv6·`"null"`)와 `isSameOrigin`(다른 host·scheme, 빈 웹 출처는 늘 false)을 단위 테스트로 확인한다
+- [ ] **(기기)** 안드로이드 Expo Go에서 같은 왕복(테마·기간·ready)이 동작하고, 웹 출처 밖 링크는 기기 브라우저로 열린다. `ready`가 도착하면 `nativeEvent.url` 출처 확인도 통과한 것이다
+- [ ] **(기기)** TalkBack: 로딩 중에는 WebView로 들어가지 않고, 열리면 "웹 페이지를 열었습니다"를 읽는다(react-native-web의 `announceForAccessibility`는 아무것도 하지 않아 웹 미리보기로 판정할 수 없다)
 - [ ] 웹 `/embed/stocks/AAPL`이 Hallmark `sloplint --scope app` FAIL 0이다
 
 ## 6. 범위 밖
@@ -82,7 +87,7 @@
 - **임베드 주소를 경로로**(설계자 판단, design.md §7의 `?embed=1`은 예시였다): `/embed/stocks/{ticker}` 경로를 쓴다. 레이아웃은 `searchParams`를 읽을 수 없어 `?embed=1`로는 상단 바·목록을 숨길 수 없다. 또 페이지에서 `searchParams`를 읽으면 그 부분이 요청 시점 렌더가 된다. 경로로 나누면 임베드 페이지도 종목별로 미리 렌더링되고 ISR 스냅샷을 그대로 쓴다. 그래서 상단 바는 루트 레이아웃에서 `(market)` 레이아웃과 404 페이지로 옮긴다
 - **처음 테마를 주소로**(설계자 판단): 메시지는 하이드레이션 뒤에야 받을 수 있어, 메시지만 쓰면 첫 화면이 기기 테마로 그려졌다가 바뀐다. `injectedJavaScriptBeforeContentLoaded`는 react-native-webview 문서가 Android에서 "not 100% reliable"이라고 한다(Reference.md). 주소 + 인라인 스크립트는 네이티브·iframe 모두에서 같게 동작한다
 - **앱 → 웹은 `injectJavaScript`로 `message` 이벤트를 보냄**(설계자 판단): ref의 `postMessage`가 페이지의 어디(`window`/`document`)에 도착하는지 react-native-webview 문서에 없다. 문서가 런타임 주입 방법으로 안내하는 `injectJavaScript`로 `window`에 이벤트를 보내면, iframe의 `postMessage`와 같은 리스너 하나로 받을 수 있다
-- **웹 → 앱 출처 확인을 이동 제한으로**(설계자 판단): `onMessage` 이벤트에서 문서가 보장하는 필드는 `data`뿐이라 보낸 쪽 주소를 믿을 수 없다. 대신 WebView가 웹 출처 밖으로 가지 않게 막는다(`originWhitelist`, `onShouldStartLoadWithRequest`). Android는 첫 로드에서 `onShouldStartLoadWithRequest`를 부르지 않지만(Reference.md), 첫 주소는 앱이 만든 웹 출처 주소다
+- **웹 → 앱 출처 확인은 이동 제한과 보낸 프레임 주소로**(설계자 판단, #32 리뷰로 고침): 처음에는 `onMessage`에 대해 문서가 설명하는 필드가 `data`뿐이라 보낸 쪽 주소를 믿지 않고, 이동 제한만으로 출처를 보장한다고 봤다. 그런데 이동을 막아도 다른 출처의 iframe은 메시지를 보낼 수 있다(Android는 모든 프레임에 `ReactNativeWebView`를 넣는다, `RNCWebView.java` `addWebMessageListener(…, Set.of("*"), …)`). 설치된 react-native-webview 14.0.1 소스에서 `nativeEvent.url`이 보낸 프레임의 출처(Android `onPostMessage`의 `sourceOrigin`)·주소(iOS `message.frameInfo.request.URL`)임을 확인하고, 그 출처도 웹 출처와 비교한다. 단 `WEB_MESSAGE_LISTENER`가 없는 구형 Android WebView는 최상위 문서 주소(`getUrl()`)를 넣어 iframe을 구분하지 못하므로, 이동 제한은 그대로 둔다. `originWhitelist` 밖의 주소는 라이브러리가 OS에 넘긴다(기기 브라우저). 그런데 이 목록은 접두어 정규식으로 비교한다(`lib/WebViewShared.js` `originWhitelistToRegex`). 그래서 `https://expo-next-ticker.vercel.app.example.com`도 통과하므로 `onShouldStartLoadWithRequest`에서 출처가 정확히 같은지(`originOf`) 다시 본다(#32에서 확인). Android는 첫 로드에서 `onShouldStartLoadWithRequest`를 부르지 않지만(Reference.md), 첫 주소는 앱이 만든 웹 출처 주소다
 - **웹 미리보기는 iframe**(설계자 판단): 이 저장소는 앱 화면을 Expo 웹 미리보기로 확인한다(#4 결정). react-native-webview는 웹을 지원하지 않으므로 같은 props의 `.web.tsx` 구현을 둔다. 그러면 메시지 왕복을 브라우저에서 자동으로 확인할 수 있다. 네이티브 경로는 기기에서 확인한다
 - **`ready`를 기다림**(설계자 판단): WebView의 `onLoadEnd`는 HTML이 끝났다는 뜻이고 웹 앱이 메시지를 받을 준비가 됐다는 뜻은 아니다. 준비 신호를 웹이 직접 보내면 로딩 문구를 걷는 시점과 메시지 연결 확인이 하나가 된다. 15초는 Vercel 함수 콜드 스타트와 느린 모바일망을 감안한 값이다
 - **`range`를 받아 쓰는 곳**(설계자 판단): 웹의 상태를 앱이 알고 있다는 것을 헤더와 "다시 시도"로 보여 준다. 앱 상세의 기간까지 맞추면 두 화면이 서로의 상태를 바꾸게 되어 범위 밖으로 둔다

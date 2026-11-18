@@ -4,6 +4,7 @@ import {
   onlineManager,
   QueryClient,
 } from "@tanstack/react-query";
+import { originOf } from "@ticker/bridge";
 import type { MarketApiConfig } from "@ticker/market/react";
 import { AppState, Platform } from "react-native";
 
@@ -21,6 +22,14 @@ export const marketApi: MarketApiConfig = {
   fetch: (url, init) =>
     fetch(url, { signal: init?.signal as AbortSignal | undefined }),
 };
+
+/**
+ * WebView 화면이 여는 웹 출처. 시세 API와 같은 서버다(webview-bridge.md §3).
+ * 그래서 EXPO_PUBLIC_API_BASE_URL은 scheme이 있고 경로가 없는 표준 형식의 출처(예: http://192.168.0.10:3000)여야
+ * 한다. 대소문자·기본 포트는 WebView·브라우저가 보고하는 모양으로 맞춘다(originOf). scheme이 없으면 ""가 되고
+ * WebView 화면은 아무 출처도 받아들이지 않는다(isSameOrigin)
+ */
+export const webOrigin = originOf(marketApi.baseUrl);
 
 export const queryClient = new QueryClient();
 

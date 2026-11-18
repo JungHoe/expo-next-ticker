@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   decodeToApp,
   decodeToWeb,
+  embedUrl,
   encodeToApp,
   encodeToWeb,
+  isSameOrigin,
   messageEventScript,
+  originOf,
 } from "./index";
 
 describe("메시지 규격(webview-bridge.md §3)", () => {
@@ -107,5 +110,55 @@ describe("injectJavaScript용 코드", () => {
 
   it("문서대로 true로 끝난다", () => {
     expect(messageEventScript("x").endsWith("true;")).toBe(true);
+  });
+});
+
+describe("임베드 주소", () => {
+  it("경로·기간·테마", () => {
+    expect(embedUrl("https://ticker.test", "AAPL", "1d", "dark")).toBe(
+      "https://ticker.test/embed/stocks/AAPL?range=1d&theme=dark",
+    );
+  });
+
+  it("티커는 경로 문자로 인코딩한다", () => {
+    expect(embedUrl("http://localhost:3000", "A/B?", "1h", "light")).toBe(
+      "http://localhost:3000/embed/stocks/A%2FB%3F?range=1h&theme=light",
+    );
+  });
+
+  it.each([
+    ["https://ticker.test/embed/stocks/AAPL?range=1h", "https://ticker.test"],
+    ["http://localhost:3000", "http://localhost:3000"],
+    ["https://ticker.test.evil.example/x", "https://ticker.test.evil.example"],
+    ["https://ticker.test#x", "https://ticker.test"],
+    ["about:blank", ""],
+    ["not a url", ""],
+    // 브라우저·WebView가 보고하는 출처와 같은 모양으로 맞춘다(#32 리뷰)
+    ["HTTP://MyPC.Local:3000/embed", "http://mypc.local:3000"],
+    ["https://ticker.test:443/x", "https://ticker.test"],
+    ["http://ticker.test:80", "http://ticker.test"],
+    ["http://ticker.test:443", "http://ticker.test:443"],
+    ["https://ticker.test:4430", "https://ticker.test:4430"],
+    // 사용자 정보가 붙은 주소는 웹 출처와 같다고 보지 않는다
+    ["https://ticker.test@evil.example/", "https://ticker.test@evil.example"],
+    ["http://[::1]:80/x", "http://[::1]"],
+    ["http://[::1]:3000", "http://[::1]:3000"],
+    // 불투명 출처(data:·sandbox iframe)를 브라우저는 "null"로 보고한다
+    ["null", ""],
+  ])("%s의 출처는 %s", (url, origin) => {
+    expect(originOf(url)).toBe(origin);
+  });
+
+  it.each([
+    ["https://ticker.test/embed/stocks/AAPL", "https://ticker.test", true],
+    ["HTTPS://Ticker.test:443/x", "https://ticker.test", true],
+    ["https://ticker.test.evil.example/", "https://ticker.test", false],
+    ["http://ticker.test/", "https://ticker.test", false],
+    // 웹 출처가 비면(예: 환경 변수에 scheme을 빠뜨림) 무엇도 같다고 보지 않는다(#37 리뷰)
+    ["data:text/html,x", "", false],
+    ["null", "", false],
+    ["", "", false],
+  ])("isSameOrigin(%s, %s) = %s", (url, origin, expected) => {
+    expect(isSameOrigin(url, origin)).toBe(expected);
   });
 });

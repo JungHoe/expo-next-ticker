@@ -7,7 +7,7 @@
  * - 받는 쪽은 decode가 null이면 조용히 무시한다. 예외를 던지지 않는다
  * - DOM·React Native API를 쓰지 않는다. 웹과 앱이 이 파일을 그대로 쓴다
  */
-import { HistoryRangeSchema } from "@ticker/market";
+import { type HistoryRange, HistoryRangeSchema } from "@ticker/market";
 import type { ColorMode } from "@ticker/tokens";
 import { z } from "zod";
 
@@ -85,4 +85,46 @@ export const decodeToApp = decode(ToAppSchema);
  */
 export function messageEventScript(data: string): string {
   return `window.dispatchEvent(new MessageEvent("message", { data: ${JSON.stringify(data)} }));true;`;
+}
+
+/**
+ * 앱이 WebView에 여는 주소(webview-bridge.md §2, §3). 처음 테마와 기간을 주소로 넘긴다.
+ * RN의 URL·URLSearchParams 구현은 일부만 있어 문자열로 만든다
+ */
+export function embedUrl(
+  origin: string,
+  ticker: string,
+  range: HistoryRange,
+  theme: Theme,
+): string {
+  return `${origin}/embed/stocks/${encodeURIComponent(ticker)}?range=${range}&theme=${theme}`;
+}
+
+const DEFAULT_PORT: Record<string, string> = { http: "80", https: "443" };
+
+/**
+ * 주소에서 "scheme://host[:port]"만 꺼낸다. 출처를 정확히 비교할 때 쓴다(접두어 비교는 a.com.evil.com을 통과시킨다).
+ * 브라우저·WebView가 보고하는 출처와 같은 모양으로 scheme·host를 소문자로, 기본 포트를 뗀다. 환경 변수에
+ * "http://MyPC.local:3000"을 줘도 비교가 어긋나지 않게 하려는 것이다(#32 리뷰). 사용자 정보("a@b")는 떼지 않는다:
+ * 그런 주소는 웹 출처와 같다고 보지 않는다
+ */
+export function originOf(url: string): string {
+  const match = /^([a-z][a-z0-9+.-]*):\/\/([^/?#]*)/i.exec(url);
+  if (!match) return "";
+  const [, rawScheme = "", rawHost = ""] = match;
+  const scheme = rawScheme.toLowerCase();
+  let host = rawHost.toLowerCase();
+  const port = DEFAULT_PORT[scheme];
+  if (port && host.endsWith(`:${port}`)) {
+    host = host.slice(0, -(port.length + 1));
+  }
+  return `${scheme}://${host}`;
+}
+
+/**
+ * url이 웹 출처(originOf로 만든 값)의 주소인가. 웹 출처가 비어 있으면 늘 false다: 환경 변수에 scheme을 빠뜨려
+ * originOf가 ""를 돌려줘도, "null"(불투명 출처)·data: 주소가 ""와 같다고 통과하지 않게 한다(#37 리뷰)
+ */
+export function isSameOrigin(url: string, origin: string): boolean {
+  return origin !== "" && originOf(url) === origin;
 }
